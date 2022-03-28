@@ -10,6 +10,8 @@
 #include <stb_image.h>
 #include <stb_image_write.h>
 
+#include <iostream>
+
 GLuint CreateProgramFromSource(String programSource, const char* shaderName)
 {
     GLchar  infoLogBuffer[1024] = {};
@@ -180,6 +182,26 @@ u32 LoadTexture2D(App* app, const char* filepath)
 
 void Init(App* app)
 {
+    // Get and save current opengl version
+    app->info.version = (char*)(glGetString(GL_VERSION));
+
+    // Get and save current renderer
+    app->info.renderer = (char*)(glGetString(GL_RENDERER));
+
+    // Get and save current vendor
+    app->info.vendor = (char*)(glGetString(GL_VENDOR));
+
+    // Get and save glsl version
+    app->info.glslVerstion = (char*)(glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+    // Get and save number of extensions and extension names
+    glGetIntegerv(GL_NUM_EXTENSIONS, &app->info.numExtensions);
+    app->info.extensions = new std::string[app->info.numExtensions];
+    for (int i = 0; i < app->info.numExtensions; ++i)
+    {
+        app->info.extensions[i] = (char*)glGetStringi(GL_EXTENSIONS, GLuint(i));
+    }
+
     // TODO: Initialize your resources here!
     // - vertex buffers
     // - element/index buffers
