@@ -42,6 +42,12 @@ enum Mode
     Mode_Count
 };
 
+struct VertexV3V2
+{
+    vec3 pos;
+    vec2 uv;
+};
+
 struct OpenGLInfo
 {
     std::string  version;
@@ -96,6 +102,10 @@ struct App
 
     // OpenGL context information
     OpenGLInfo info;
+
+    // TO delete
+    const VertexV3V2 vertices[4];
+    const u16 indices[6];
 };
 
 void Init(App* app);

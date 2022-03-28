@@ -202,6 +202,14 @@ void Init(App* app)
         app->info.extensions[i] = (char*)glGetStringi(GL_EXTENSIONS, GLuint(i));
     }
 
+    app->vertices[] = {
+        {vec3(-0.5,-0.5, 0.0),vec2(0.0,0.0)},
+        {vec3(0.5,-0.5, 0.0),vec2(1.0,0.0)},
+        {vec3(0.5, 0.5, 0.0),vec2(1.0,1.0)},
+        {vec3(-0.5, 0.5, 0.0),vec2(0.0,1.0)}
+    };
+
+    app->indices[] = { 0,1,2,0,2,3 };
     // TODO: Initialize your resources here!
     // - vertex buffers
     // - element/index buffers
