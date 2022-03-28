@@ -216,6 +216,15 @@ void Gui(App* app)
 {
     ImGui::Begin("Info");
     ImGui::Text("FPS: %f", 1.0f/app->deltaTime);
+    ImGui::Text("OpenGL version: %s", app->info.version.c_str());
+    ImGui::Text("OpenGL renderer: %s", app->info.renderer.c_str());
+    ImGui::Text("OpenGL vendor: %s", app->info.vendor.c_str());
+    ImGui::Text("OpenGL GLSL version: %s", app->info.glslVerstion.c_str());
+    ImGui::Text("OpenGL %d extensions:", app->info.numExtensions);
+    for (int i = 0; i < app->info.numExtensions; ++i)
+    {
+        ImGui::Text("\t%s", app->info.extensions[i].c_str());
+    }
     ImGui::End();
 }
 
