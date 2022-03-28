@@ -104,8 +104,14 @@ struct App
     OpenGLInfo info;
 
     // TO delete
-    const VertexV3V2 vertices[4];
-    const u16 indices[6];
+    const VertexV3V2 vertices[4] = {
+        {vec3(-0.5,-0.5, 0.0),vec2(0.0,0.0)},
+        {vec3(0.5,-0.5, 0.0),vec2(1.0,0.0)},
+        {vec3(0.5, 0.5, 0.0),vec2(1.0,1.0)},
+        {vec3(-0.5, 0.5, 0.0),vec2(0.0,1.0)}
+    };
+
+    const u16 indices[6] = { 0,1,2,0,2,3 };
 };
 
 void Init(App* app);
