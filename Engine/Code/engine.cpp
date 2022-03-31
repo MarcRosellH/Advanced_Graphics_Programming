@@ -241,12 +241,7 @@ void Init(App* app)
     app->normalTexIdx = LoadTexture2D(app, "color_normal.png");
     app->magentaTexIdx = LoadTexture2D(app, "color_magenta.png");
 
-    // TODO: Initialize your resources here!
-    // - vertex buffers
-    // - element/index buffers
-    // - vaos
-    // - programs (and retrieve uniform indices)
-    // - textures
+    
 
     app->mode = Mode_TexturedQuad;
 }
@@ -290,8 +285,8 @@ void Render(App* app)
 {
     switch (app->mode)
     {
-        case Mode_TexturedQuad:
-            {
+    case Mode_TexturedQuad:
+    {
             glClearColor(0.1F, 0.1F, 0.1F, 1.0F);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -314,19 +309,21 @@ void Render(App* app)
             glBindVertexArray(0);
             glUseProgram(0);
 
-                // TODO: Draw your textured quad here!
-                // - clear the framebuffer
-                // - set the viewport
-                // - set the blending state
-                // - bind the texture into unit 0
-                // - bind the program 
-                //   (...and make its texture sample from unit 0)
-                // - bind the vao
-                // - glDrawElements() !!!
-            }
-            break;
-
-        default:;
+            // TODO: Draw your textured quad here!
+            // - clear the framebuffer
+            // - set the viewport
+            // - set the blending state
+            // - bind the texture into unit 0
+            // - bind the program 
+            //   (...and make its texture sample from unit 0)
+            // - bind the vao
+            // - glDrawElements() !!!
+        }
+        break;
+    case Mode_TexturedMesh:
+    {}
+        break;
+    default:break;
     }
 }
 
