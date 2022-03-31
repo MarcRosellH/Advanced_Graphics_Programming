@@ -28,20 +28,6 @@ struct Texture
     std::string filepath;
 };
 
-struct Program
-{
-    GLuint             handle;
-    std::string        filepath;
-    std::string        programName;
-    u64                lastWriteTimestamp; // What is this for?
-};
-
-struct Model
-{
-    u32                 meshIdx;
-    std::vector<u32>    materialIdx;
-};
-
 struct VertexBufferAttribute
 {
     u8 location;
@@ -64,6 +50,21 @@ struct VertexShaderAttribute
 struct VertexShaderLayout
 {
     std::vector<VertexShaderAttribute>  attributes;
+};
+
+struct Program
+{
+    GLuint             handle;
+    std::string        filepath;
+    std::string        programName;
+    VertexShaderLayout vertexInputLayout;
+    u64                lastWriteTimestamp; // What is this for?
+};
+
+struct Model
+{
+    u32                 meshIdx;
+    std::vector<u32>    materialIdx;
 };
 
 struct Vao
@@ -150,6 +151,7 @@ struct App
 
     // Program indices
     u32 texturedGeometryProgramIdx;
+    u32 texturedMeshProgramIdx;
     
     // texture indices
     u32 diceTexIdx;
@@ -169,11 +171,17 @@ struct App
     // Location of the texture uniform in the textured quad shader
     GLuint programUniformTexture;
 
+    // Uniforms
+    GLint texturedMeshProgram_uTexture;
+
     // VAO object to link our screen filling quad with our textured quad shader
     GLuint vao;
 
     // OpenGL context information
     OpenGLInfo info;
+
+    // Model
+    u32 model;
 
     // TO delete
     const VertexV3V2 vertices[4] = {
@@ -195,5 +203,11 @@ void Update(App* app);
 void Render(App* app);
 
 u32 LoadTexture2D(App* app, const char* filepath);
+
+u32 LoadModel(App* app, const char* filename);
+
+GLuint FindVAO(Mesh& mesh, u32 submeshIndex, const Program& program);
+
+u8 GetAttribComponentCount(const GLenum& type);
 
 void OnGlError(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);

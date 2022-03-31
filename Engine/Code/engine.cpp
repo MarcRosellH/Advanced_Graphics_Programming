@@ -244,7 +244,34 @@ void Init(App* app)
     app->magentaTexIdx = LoadTexture2D(app, "color_magenta.png");
     */
 
-    app->mode = Mode_TexturedQuad;
+    app->model = LoadModel(app, "Patrick/Patrick.obj");
+
+    app->texturedMeshProgramIdx = LoadProgram(app, "simple.glsl", "SHOW_TEXTURED_MESH");
+    Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
+    GLint attributeCount;
+    glGetProgramiv(texturedMeshProgram.handle, GL_ACTIVE_ATTRIBUTES, &attributeCount);
+    for (GLint i = 0; i < attributeCount; ++i)
+    {
+        GLchar attrName[32];
+        GLsizei attrLen;
+        GLint attrSize;
+        GLenum attrType;
+
+        glGetActiveAttrib(texturedMeshProgram.handle, i,
+            ARRAY_COUNT(attrName),
+            &attrLen,
+            &attrSize,
+            &attrType,
+            attrName);
+
+        GLint attrLocation = glGetAttribLocation(texturedMeshProgram.handle, attrName);
+
+        texturedMeshProgram.vertexInputLayout.attributes.push_back({ (u8)attrLocation, GetAttribComponentCount(attrType) });
+    }
+    
+    app->texturedMeshProgram_uTexture = glGetUniformLocation(texturedMeshProgram.handle, "uTexture");
+
+    app->mode = Mode_TexturedMesh;
 }
 
 void Gui(App* app)
@@ -284,15 +311,14 @@ void Update(App* app)
 
 void Render(App* app)
 {
+    glClearColor(0.1F, 0.1F, 0.1F, 1.0F);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glViewport(0, 0, app->displaySize.x, app->displaySize.y);
     switch (app->mode)
     {
     case Mode_TexturedQuad:
     {
-            glClearColor(0.1F, 0.1F, 0.1F, 1.0F);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            glViewport(0, 0, app->displaySize.x, app->displaySize.y);
-
             Program& programTexturedGeometry = app->programs[app->texturedGeometryProgramIdx];
             glUseProgram(programTexturedGeometry.handle);
             glBindVertexArray(app->vao);
@@ -312,10 +338,82 @@ void Render(App* app)
         }
         break;
     case Mode_TexturedMesh:
-    {}
+    {
+        Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
+        glUseProgram(texturedMeshProgram.handle);
+
+        Model& model = app->models[app->model];
+        Mesh& mesh = app->meshes[model.meshIdx];
+
+        for (u32 i = 0; i < mesh.submeshes.size(); ++i)
+        {
+            GLuint vao = FindVAO(mesh, i, texturedMeshProgram);
+            glBindVertexArray(vao);
+
+            u32 submeshMaterialIdx = model.materialIdx[i];
+            Material& submeshMaterial = app->materials[submeshMaterialIdx];
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, app->textures[submeshMaterial.albedoTextureIdx].handle);
+            glUniform1i(app->texturedMeshProgram_uTexture, 0);
+
+            Submesh& submesh = mesh.submeshes[i];
+            glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
+        }
+    }
         break;
     default:break;
     }
+}
+
+GLuint FindVAO(Mesh& mesh, u32 submeshIndex, const Program& program)
+{
+    Submesh& submesh = mesh.submeshes[submeshIndex];
+
+    for (u32 i = 0; i < (u32)submesh.vaos.size(); ++i)
+    {
+        if (submesh.vaos[i].programHandle == program.handle)
+            return submesh.vaos[i].handle;
+    }
+
+    GLuint vaoHandle = 0;
+
+    glGenVertexArrays(1, &vaoHandle);
+    glBindVertexArray(vaoHandle);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vertexBufferHandle);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.indexBufferHandle);
+
+    for (u32 i = 0; i < program.vertexInputLayout.attributes.size(); ++i)
+    {
+        bool attributeWasLinked = false;
+
+        for (u32 j = 0; j < submesh.vertexBufferLayout.attributes.size(); ++j)
+        {
+            if (program.vertexInputLayout.attributes[i].location == submesh.vertexBufferLayout.attributes[j].location)
+            {
+                const u32 index = submesh.vertexBufferLayout.attributes[j].location;
+                const u32 ncomp = submesh.vertexBufferLayout.attributes[j].componentCount;
+                const u32 offset = submesh.vertexBufferLayout.attributes[j].offset*submesh.vertexOffset;
+                const u32 stride = submesh.vertexBufferLayout.stride;
+
+                glVertexAttribPointer(index, ncomp, GL_FLOAT, GL_FALSE, stride, (void*)(u64)offset);
+                glEnableVertexAttribArray(index);
+
+                attributeWasLinked = true;
+                break;
+            }
+        }
+
+        assert(attributeWasLinked);
+    }
+
+    glBindVertexArray(0);
+
+    Vao vao = { vaoHandle, program.handle };
+    submesh.vaos.push_back(vao);
+
+    return vaoHandle;
 }
 
 void OnGlError(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
@@ -357,3 +455,48 @@ void OnGlError(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei l
     }
 }
 
+u8 GetAttribComponentCount(const GLenum& type)
+{
+    switch (type)
+    {
+    case GL_FLOAT: return 1; break; 
+    case GL_FLOAT_VEC2: return 2; break; 
+    case GL_FLOAT_VEC3: return 3; break; 
+    case GL_FLOAT_VEC4: return 4; break;
+    case GL_FLOAT_MAT2: return 4; break; 
+    case GL_FLOAT_MAT3: return 9; break; 
+    case GL_FLOAT_MAT4: return 16; break;
+    case GL_FLOAT_MAT2x3: return 6; break; 
+    case GL_FLOAT_MAT2x4: return 8; break;
+    case GL_FLOAT_MAT3x2: return 6; break; 
+    case GL_FLOAT_MAT3x4: return 12; break;
+    case GL_FLOAT_MAT4x2: return 8; break; 
+    case GL_FLOAT_MAT4x3: return 12; break;
+    case GL_INT: return 1; break; 
+    case GL_INT_VEC2: return 2; break; 
+    case GL_INT_VEC3: return 3; break; 
+    case GL_INT_VEC4: return 4; break;
+    case GL_UNSIGNED_INT: return 1; break; 
+    case GL_UNSIGNED_INT_VEC2: return 2; break; 
+    case GL_UNSIGNED_INT_VEC3: return 3; break; 
+    case GL_UNSIGNED_INT_VEC4: return 4; break;
+    case GL_DOUBLE: return 1; break; 
+    case GL_DOUBLE_VEC2: return 2; break; 
+    case GL_DOUBLE_VEC3: return 3; break; 
+    case GL_DOUBLE_VEC4: return 4; break;
+    case GL_DOUBLE_MAT2: return 4; break; 
+    case GL_DOUBLE_MAT3: return 9; break; 
+    case GL_DOUBLE_MAT4: return 16;
+    case GL_DOUBLE_MAT2x3: return 6; break; 
+    case GL_DOUBLE_MAT2x4: return 8; break;
+    case GL_DOUBLE_MAT3x2: return 6; break; 
+    case GL_DOUBLE_MAT3x4: return 12; break;
+    case GL_DOUBLE_MAT4x2: return 8; break; 
+    case GL_DOUBLE_MAT4x3: return 12; break;
+    default: return 0; break;
+    }
+
+    // default should return always 0 if no defined type is sent in
+    // but let's be sure
+    return 0;
+}
