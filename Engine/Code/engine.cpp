@@ -209,7 +209,7 @@ void Init(App* app)
         app->info.extensions[i] = (char*)glGetStringi(GL_EXTENSIONS, GLuint(i));
     }
 
-    // Geometry
+    /*// Geometry
     glGenBuffers(1, &app->embeddedVertices);
     glBindBuffer(GL_ARRAY_BUFFER, app->embeddedVertices);
     glBufferData(GL_ARRAY_BUFFER, sizeof(app->vertices), app->vertices, GL_STATIC_DRAW);
@@ -230,8 +230,10 @@ void Init(App* app)
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, app->embeddedElements);
     glBindVertexArray(0);
+    */
 
-    app->texturedGeometryProgramIdx = LoadProgram(app, "simple.glsl", "TEXTURED_GEOMETRY");
+    /*
+    app->texturedGeometryProgramIdx = LoadProgram(app, "simple.glsl", "SHOW_TEXTURED_MESH");
     Program& texturedGeometryProgram = app->programs[app->texturedGeometryProgramIdx];
     app->programUniformTexture = glGetUniformLocation(texturedGeometryProgram.handle, "uTexture");
 
@@ -240,8 +242,7 @@ void Init(App* app)
     app->blackTexIdx = LoadTexture2D(app, "color_black.png");
     app->normalTexIdx = LoadTexture2D(app, "color_normal.png");
     app->magentaTexIdx = LoadTexture2D(app, "color_magenta.png");
-
-    
+    */
 
     app->mode = Mode_TexturedQuad;
 }
@@ -308,16 +309,6 @@ void Render(App* app)
 
             glBindVertexArray(0);
             glUseProgram(0);
-
-            // TODO: Draw your textured quad here!
-            // - clear the framebuffer
-            // - set the viewport
-            // - set the blending state
-            // - bind the texture into unit 0
-            // - bind the program 
-            //   (...and make its texture sample from unit 0)
-            // - bind the vao
-            // - glDrawElements() !!!
         }
         break;
     case Mode_TexturedMesh:

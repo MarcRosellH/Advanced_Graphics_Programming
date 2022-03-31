@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Code\assimp_model_loading.cpp" />
     <ClCompile Include="Code\engine.cpp" />
     <ClCompile Include="Code\platform.cpp" />
     <ClCompile Include="ThirdParty\glad\include\glad\glad.c" />
@@ -146,7 +147,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)\ThirdParty\glfw\include;$(SolutionDir)\ThirdParty\glad\include;$(SolutionDir)\ThirdParty\glm\include;$(SolutionDir)\ThirdParty\imgui-docking;$(SolutionDir)\ThirdParty\stb;$(SolutionDir)\ThirdParty\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -163,7 +164,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\jdiaz\Projects\AGP\Engine\ThirdParty\glfw\include;C:\Users\jdiaz\Projects\AGP\Engine\ThirdParty\glad\include;C:\Users\jdiaz\Projects\AGP\Engine\ThirdParty\glm\include;C:\Users\jdiaz\Projects\AGP\Engine\ThirdParty\imgui-docking;C:\Users\jdiaz\Projects\AGP\Engine\ThirdParty\stb;C:\Users\jdiaz\Projects\AGP\Engine\ThirdParty\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>

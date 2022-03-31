@@ -194,4 +194,6 @@ void Update(App* app);
 
 void Render(App* app);
 
+u32 LoadTexture2D(App* app, const char* filepath);
+
 void OnGlError(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
