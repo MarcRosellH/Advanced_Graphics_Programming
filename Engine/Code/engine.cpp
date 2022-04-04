@@ -244,7 +244,7 @@ void Init(App* app)
     app->magentaTexIdx = LoadTexture2D(app, "color_magenta.png");
     */
 
-    app->model = LoadModel(app, "Patrick/Patrick.obj");
+    app->model = LoadModel(app, "Room/Room #1.obj");
 
     app->texturedMeshProgramIdx = LoadProgram(app, "simple.glsl", "SHOW_TEXTURED_MESH");
     Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
@@ -313,6 +313,8 @@ void Render(App* app)
 {
     glClearColor(0.1F, 0.1F, 0.1F, 1.0F);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glEnable(GL_DEPTH_TEST);
 
     glViewport(0, 0, app->displaySize.x, app->displaySize.y);
     switch (app->mode)
@@ -506,7 +508,12 @@ glm::mat4 TransformScale(const vec3& scaleFactors)
     return glm::scale(scaleFactors);
 }
 
-glm::mat4 TransformPositionScale(const vec3& pos, const vec3& scaleFactors)
+glm::mat4 TransformPositionRotationScale(const vec3& pos, const vec3& rot,const vec3& scaleFactors)
 {
-    return glm::scale(glm::translate(pos),scaleFactors);
+    glm::mat4 transform = glm::translate(pos);
+    glm::vec3 radiaRot = glm::radians(rot);
+    transform = glm::rotate(transform, radiaRot.x, glm::vec3(1.F, 0.F, 0.F));
+    transform = glm::rotate(transform, radiaRot.y, glm::vec3(0.F, 1.F, 0.F));
+    transform = glm::rotate(transform, radiaRot.y, glm::vec3(0.F, 0.F, 1.F));
+    return glm::scale(transform, scaleFactors);
 }

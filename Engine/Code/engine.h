@@ -196,6 +196,9 @@ struct App
     // Model
     u32 model;
 
+    // Camera
+    Camera cam;
+
     // TO delete
     const VertexV3V2 vertices[4] = {
         {vec3(-0.5,-0.5, 0.0),vec2(0.0,0.0)},
@@ -225,6 +228,6 @@ u8 GetAttribComponentCount(const GLenum& type);
 
 glm::mat4 TransformScale(const vec3& scaleFactors);
 
-glm::mat4 TransformPositionScale(const vec3& pos, const vec3& scaleFactors);
+glm::mat4 TransformPositionRotationScale(const vec3& pos, const vec3& rot, const vec3& scaleFactors);
 
 void OnGlError(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
