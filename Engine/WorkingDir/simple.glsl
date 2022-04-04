@@ -58,7 +58,7 @@ void main()
 
 in vec2 vTexCoord;
 
-uniform sampled2D uTexture;
+uniform sampler2D uTexture;
 
 layout(location = 0) out vec4 oColor;
 

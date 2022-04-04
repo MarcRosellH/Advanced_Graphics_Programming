@@ -394,7 +394,7 @@ GLuint FindVAO(Mesh& mesh, u32 submeshIndex, const Program& program)
             {
                 const u32 index = submesh.vertexBufferLayout.attributes[j].location;
                 const u32 ncomp = submesh.vertexBufferLayout.attributes[j].componentCount;
-                const u32 offset = submesh.vertexBufferLayout.attributes[j].offset*submesh.vertexOffset;
+                const u32 offset = submesh.vertexBufferLayout.attributes[j].offset+submesh.vertexOffset;
                 const u32 stride = submesh.vertexBufferLayout.stride;
 
                 glVertexAttribPointer(index, ncomp, GL_FLOAT, GL_FALSE, stride, (void*)(u64)offset);
