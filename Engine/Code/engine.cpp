@@ -354,9 +354,9 @@ void Render(App* app)
             Material& submeshMaterial = app->materials[submeshMaterialIdx];
 
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, app->textures[submeshMaterial.albedoTextureIdx].handle);
+            glBindTexture(GL_TEXTURE_2D, app->textures[submeshMaterial.albedoTextureIdx < UINT32_MAX ? submeshMaterial.albedoTextureIdx : app->whiteTexIdx].handle);
             glUniform1i(app->texturedMeshProgram_uTexture, 0);
-
+            
             Submesh& submesh = mesh.submeshes[i];
             glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
         }
@@ -405,7 +405,7 @@ GLuint FindVAO(Mesh& mesh, u32 submeshIndex, const Program& program)
             }
         }
 
-        assert(attributeWasLinked);
+        //assert(attributeWasLinked);
     }
 
     glBindVertexArray(0);
@@ -499,4 +499,14 @@ u8 GetAttribComponentCount(const GLenum& type)
     // default should return always 0 if no defined type is sent in
     // but let's be sure
     return 0;
+}
+
+glm::mat4 TransformScale(const vec3& scaleFactors)
+{
+    return glm::scale(scaleFactors);
+}
+
+glm::mat4 TransformPositionScale(const vec3& pos, const vec3& scaleFactors)
+{
+    return glm::scale(glm::translate(pos),scaleFactors);
 }

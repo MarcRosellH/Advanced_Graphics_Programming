@@ -104,6 +104,19 @@ struct Material
     u32         bumpTextureIdx;
 };
 
+struct Transform
+{
+    vec3 position;
+    vec3 rotation;
+    vec3 scale;
+};
+
+struct Camera
+{
+    Transform   transform;
+    glm::mat4   projection;
+};
+
 enum Mode
 {
     Mode_TexturedQuad,
@@ -209,5 +222,9 @@ u32 LoadModel(App* app, const char* filename);
 GLuint FindVAO(Mesh& mesh, u32 submeshIndex, const Program& program);
 
 u8 GetAttribComponentCount(const GLenum& type);
+
+glm::mat4 TransformScale(const vec3& scaleFactors);
+
+glm::mat4 TransformPositionScale(const vec3& pos, const vec3& scaleFactors);
 
 void OnGlError(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
