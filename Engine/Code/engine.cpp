@@ -244,8 +244,34 @@ void Init(App* app)
     app->magentaTexIdx = LoadTexture2D(app, "color_magenta.png");
     */
 
-    app->model = LoadModel(app, "Room/Room #1.obj");
+    // Create uniform buffers
+    GLint maxUniformBufferSize;
+    GLint uniformBlockAlignment;
+    glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxUniformBufferSize);
+    glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &uniformBlockAlignment);
 
+    GLuint bufferHandle;
+    glGenBuffers(1, &bufferHandle);
+    glBindBuffer(GL_UNIFORM_BUFFER, bufferHandle);
+    glBufferData(GL_UNIFORM_BUFFER, maxUniformBufferSize, NULL, GL_STREAM_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    // Entities initalization
+    Entity m;
+    m.transform.position = vec3(2.5F, 1.5F, -2.0F);
+    m.transform.rotation = vec3(0.F, 0.F, 0.F);
+    m.transform.scale = vec3(1.F, 1.F, 1.F);
+    m.worldMatrix = TransformPositionRotationScale(m.transform);
+    m.transform.updated = false;
+    m.model = LoadModel(app, "Patrick/Patrick.obj");
+    app->entities.push_back(m);
+    
+    // Camera initialization
+    app->cam.projection = glm::perspective(glm::radians(60.F), (float)app->displaySize.x / (float)app->displaySize.y, 0.1F, 1000.F);
+    app->cam.view = glm::lookAt(app->cam.position, vec3(1.F, 1.F, 1.F), vec3(0.F, 1.F, 0.F));
+    app->cam.updated = false;
+
+    // Shader loading and attribute management
     app->texturedMeshProgramIdx = LoadProgram(app, "simple.glsl", "SHOW_TEXTURED_MESH");
     Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
     GLint attributeCount;
@@ -307,6 +333,15 @@ void Update(App* app)
             program.lastWriteTimestamp = currentTimestamp;
         }
     }
+
+    for (u32 it = 0; it < app->entities.size(); ++it)
+    {
+        if (app->entities[it].transform.updated)
+        {
+            app->entities[it].worldMatrix = TransformPositionRotationScale(app->entities[it].transform);
+            app->entities[it].transform.updated = false;
+        }
+    }
 }
 
 void Render(App* app)
@@ -344,23 +379,26 @@ void Render(App* app)
         Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
         glUseProgram(texturedMeshProgram.handle);
 
-        Model& model = app->models[app->model];
-        Mesh& mesh = app->meshes[model.meshIdx];
-
-        for (u32 i = 0; i < mesh.submeshes.size(); ++i)
+        for (u32 it = 0; it < app->entities.size(); ++it)
         {
-            GLuint vao = FindVAO(mesh, i, texturedMeshProgram);
-            glBindVertexArray(vao);
+            Model& model = app->models[app->entities[it]];
+            Mesh& mesh = app->meshes[model.meshIdx];
 
-            u32 submeshMaterialIdx = model.materialIdx[i];
-            Material& submeshMaterial = app->materials[submeshMaterialIdx];
+            for (u32 i = 0; i < mesh.submeshes.size(); ++i)
+            {
+                GLuint vao = FindVAO(mesh, i, texturedMeshProgram);
+                glBindVertexArray(vao);
 
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, app->textures[submeshMaterial.albedoTextureIdx < UINT32_MAX ? submeshMaterial.albedoTextureIdx : app->whiteTexIdx].handle);
-            glUniform1i(app->texturedMeshProgram_uTexture, 0);
-            
-            Submesh& submesh = mesh.submeshes[i];
-            glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
+                u32 submeshMaterialIdx = model.materialIdx[i];
+                Material& submeshMaterial = app->materials[submeshMaterialIdx];
+
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, app->textures[submeshMaterial.albedoTextureIdx < UINT32_MAX ? submeshMaterial.albedoTextureIdx : app->whiteTexIdx].handle);
+                glUniform1i(app->texturedMeshProgram_uTexture, 0);
+
+                Submesh& submesh = mesh.submeshes[i];
+                glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
+            }
         }
     }
         break;
@@ -503,17 +541,12 @@ u8 GetAttribComponentCount(const GLenum& type)
     return 0;
 }
 
-glm::mat4 TransformScale(const vec3& scaleFactors)
+glm::mat4 TransformPositionRotationScale(const Transform& t)
 {
-    return glm::scale(scaleFactors);
-}
-
-glm::mat4 TransformPositionRotationScale(const vec3& pos, const vec3& rot,const vec3& scaleFactors)
-{
-    glm::mat4 transform = glm::translate(pos);
-    glm::vec3 radiaRot = glm::radians(rot);
+    glm::mat4 transform = glm::translate(t.position);
+    glm::vec3 radiaRot = glm::radians(t.rotation);
     transform = glm::rotate(transform, radiaRot.x, glm::vec3(1.F, 0.F, 0.F));
     transform = glm::rotate(transform, radiaRot.y, glm::vec3(0.F, 1.F, 0.F));
     transform = glm::rotate(transform, radiaRot.y, glm::vec3(0.F, 0.F, 1.F));
-    return glm::scale(transform, scaleFactors);
+    return glm::scale(transform, t.scale);
 }

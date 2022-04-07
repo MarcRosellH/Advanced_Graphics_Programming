@@ -109,12 +109,15 @@ struct Transform
     vec3 position;
     vec3 rotation;
     vec3 scale;
+    bool updated = true;
 };
 
 struct Camera
 {
-    Transform   transform;
     glm::mat4   projection;
+    glm::mat4   view;
+    vec3        position;
+    bool        updated = false;
 };
 
 enum Mode
@@ -138,6 +141,15 @@ struct OpenGLInfo
     std::string  glslVerstion;
     GLint        numExtensions;
     std::string* extensions;
+};
+
+struct Entity
+{
+    Transform   transform;
+    glm::mat4   worldMatrix;
+    u32         model;
+    u32         localParamsOffset;
+    u32         localParamsSize;
 };
 
 struct App
@@ -173,6 +185,9 @@ struct App
     u32 normalTexIdx;
     u32 magentaTexIdx;
 
+    // Entities
+    std::vector<Entity>     entities;
+
     // Mode
     Mode mode;
 
@@ -193,11 +208,14 @@ struct App
     // OpenGL context information
     OpenGLInfo info;
 
-    // Model
-    u32 model;
-
     // Camera
     Camera cam;
+
+    // Uniform buffers data management
+    GLint   maxUniformBufferSize;
+    GLint   uniformBlockAlignment;
+    GLuint  bufferHandle;
+    GLint   bufferData;
 
     // TO delete
     const VertexV3V2 vertices[4] = {
@@ -226,8 +244,11 @@ GLuint FindVAO(Mesh& mesh, u32 submeshIndex, const Program& program);
 
 u8 GetAttribComponentCount(const GLenum& type);
 
-glm::mat4 TransformScale(const vec3& scaleFactors);
+glm::mat4 TransformPositionRotationScale(const Transform& t);
 
-glm::mat4 TransformPositionRotationScale(const vec3& pos, const vec3& rot, const vec3& scaleFactors);
+u32 Align(u32 value, u32 alignment)
+{
+    return (value + alignment - 1) & ~(alignment - 1);
+}
 
 void OnGlError(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
