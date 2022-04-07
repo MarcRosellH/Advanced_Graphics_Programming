@@ -265,6 +265,20 @@ void Init(App* app)
     m.transform.updated = false;
     m.model = LoadModel(app, "Patrick/Patrick.obj");
     app->entities.push_back(m);
+
+    u32 bufferHead = 0;
+    for (u32 it = 0; it < app->entities.size(); ++it)
+    {
+        bufferHead = Align(bufferHead, app->uniformBlockAlignment);
+        app->entities[it].localParamsOffset = bufferHead;
+
+        // Add mat4 size for worldMatrix
+        bufferHead += sizeof(glm::mat4);
+        // Add mat4 size for worldViewProjectionMatrix
+        bufferHead += sizeof(glm::mat4);
+
+        app->entities[it].localParamsSize = bufferHead - app->entities[it].localParamsOffset
+    }
     
     // Camera initialization
     app->cam.projection = glm::perspective(glm::radians(60.F), (float)app->displaySize.x / (float)app->displaySize.y, 0.1F, 1000.F);
@@ -379,10 +393,16 @@ void Render(App* app)
         Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
         glUseProgram(texturedMeshProgram.handle);
 
+        u8* bufferData = (u8*)glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+
         for (u32 it = 0; it < app->entities.size(); ++it)
         {
-            Model& model = app->models[app->entities[it]];
+            Model& model = app->models[app->entities[it].model];
             Mesh& mesh = app->meshes[model.meshIdx];
+
+            glBindBuffer(GL_UNIFORM_BUFFER, app->bufferHandle);
+
+            glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
             for (u32 i = 0; i < mesh.submeshes.size(); ++i)
             {
@@ -400,6 +420,8 @@ void Render(App* app)
                 glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
             }
         }
+
+        glUnmapBuffer(GL_UNIFORM_BUFFER);
     }
         break;
     default:break;

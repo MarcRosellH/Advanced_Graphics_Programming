@@ -4,6 +4,8 @@
 
 #pragma once
 
+#define BINDING(b) b
+
 #include "platform.h"
 #include <glad/glad.h>
 
