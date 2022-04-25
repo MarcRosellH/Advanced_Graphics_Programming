@@ -154,6 +154,15 @@ struct Entity
     u32         localParamsSize;
 };
 
+struct Buffer
+{
+    GLuint  handle;
+    GLenum  type;
+    u32     size;
+    u32     head;
+    void*   data;
+};
+
 struct App
 {
     // Loop
@@ -247,10 +256,5 @@ GLuint FindVAO(Mesh& mesh, u32 submeshIndex, const Program& program);
 u8 GetAttribComponentCount(const GLenum& type);
 
 glm::mat4 TransformPositionRotationScale(const Transform& t);
-
-u32 Align(u32 value, u32 alignment)
-{
-    return (value + alignment - 1) & ~(alignment - 1);
-}
 
 void OnGlError(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);

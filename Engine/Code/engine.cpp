@@ -5,7 +5,7 @@
 // graphics related GUI options, and so on.
 //
 
-#include "engine.h"
+#include "buffer_management.h"
 #include <imgui.h>
 #include <stb_image.h>
 #include <stb_image_write.h>
@@ -269,7 +269,7 @@ void Init(App* app)
     u32 bufferHead = 0;
     for (u32 it = 0; it < app->entities.size(); ++it)
     {
-        bufferHead = Align(bufferHead, app->uniformBlockAlignment);
+       
         app->entities[it].localParamsOffset = bufferHead;
 
         // Add mat4 size for worldMatrix
@@ -277,7 +277,6 @@ void Init(App* app)
         // Add mat4 size for worldViewProjectionMatrix
         bufferHead += sizeof(glm::mat4);
 
-        app->entities[it].localParamsSize = bufferHead - app->entities[it].localParamsOffset
     }
     
     // Camera initialization
