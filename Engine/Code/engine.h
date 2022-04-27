@@ -60,7 +60,7 @@ struct Program
     std::string        filepath;
     std::string        programName;
     VertexShaderLayout vertexInputLayout;
-    u64                lastWriteTimestamp; // What is this for?
+    u64                lastWriteTimestamp;
 };
 
 struct Model
@@ -154,6 +154,14 @@ struct Entity
     u32         localParamsSize;
 };
 
+struct Light
+{
+    int     type;
+    vec3    color;
+    vec3    position;
+    float   range;
+};
+
 struct Buffer
 {
     GLuint  handle;
@@ -225,8 +233,7 @@ struct App
     // Uniform buffers data management
     GLint   maxUniformBufferSize;
     GLint   uniformBlockAlignment;
-    GLuint  bufferHandle;
-    GLint   bufferData;
+    Buffer  uniformBuffer;
 
     // TO delete
     const VertexV3V2 vertices[4] = {

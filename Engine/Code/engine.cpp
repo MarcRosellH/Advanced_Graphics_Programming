@@ -245,16 +245,10 @@ void Init(App* app)
     */
 
     // Create uniform buffers
-    GLint maxUniformBufferSize;
-    GLint uniformBlockAlignment;
-    glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxUniformBufferSize);
-    glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &uniformBlockAlignment);
+    glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &app->maxUniformBufferSize);
+    glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &app->uniformBlockAlignment);
 
-    GLuint bufferHandle;
-    glGenBuffers(1, &bufferHandle);
-    glBindBuffer(GL_UNIFORM_BUFFER, bufferHandle);
-    glBufferData(GL_UNIFORM_BUFFER, maxUniformBufferSize, NULL, GL_STREAM_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    app->uniformBuffer = CreateConstantBuffer(app->maxUniformBufferSize);
 
     // Entities initalization
     Entity m;
@@ -392,16 +386,10 @@ void Render(App* app)
         Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
         glUseProgram(texturedMeshProgram.handle);
 
-        u8* bufferData = (u8*)glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
-
         for (u32 it = 0; it < app->entities.size(); ++it)
         {
             Model& model = app->models[app->entities[it].model];
             Mesh& mesh = app->meshes[model.meshIdx];
-
-            glBindBuffer(GL_UNIFORM_BUFFER, app->bufferHandle);
-
-            glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
             for (u32 i = 0; i < mesh.submeshes.size(); ++i)
             {
@@ -419,8 +407,6 @@ void Render(App* app)
                 glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
             }
         }
-
-        glUnmapBuffer(GL_UNIFORM_BUFFER);
     }
         break;
     default:break;
