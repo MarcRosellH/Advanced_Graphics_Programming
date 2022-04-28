@@ -254,7 +254,7 @@ void Init(App* app)
     app->roomModelIdx = LoadModel(app, "Room/Room #1.obj");
 
     // Entities initalization
-    app->entities.push_back(Entity{ MatrixFromPositionRotationScale(vec3(0,0,0),vec3(0,0,0),vec3(1,1,1)), app->patrickModelIdx, });
+    app->entities.push_back(Entity{ MatrixFromPositionRotationScale(vec3(0,3,0),vec3(2,0,2),vec3(1,1,1)), app->patrickModelIdx, });
 
     u32 bufferHead = 0;
     for (u32 it = 0; it < app->entities.size(); ++it)
@@ -304,16 +304,19 @@ void Init(App* app)
 
 void Gui(App* app)
 {
-    ImGui::Begin("Info");
-    ImGui::Text("FPS: %f", 1.0f/app->deltaTime);
-    ImGui::Text("OpenGL version: %s", app->info.version.c_str());
-    ImGui::Text("OpenGL renderer: %s", app->info.renderer.c_str());
-    ImGui::Text("OpenGL vendor: %s", app->info.vendor.c_str());
-    ImGui::Text("OpenGL GLSL version: %s", app->info.glslVersion.c_str());
-    ImGui::Text("OpenGL %d extensions:", app->info.numExtensions);
-    for (int i = 0; i < app->info.numExtensions; ++i)
+    ImGui::Begin("Menu");
+    ImGui::Text("FPS: %f", 1.0f / app->deltaTime);
+    if (ImGui::CollapsingHeader("Info"))
     {
-        ImGui::Text("\t%s", app->info.extensions[i].c_str());
+        ImGui::Text("OpenGL version: %s", app->info.version.c_str());
+        ImGui::Text("OpenGL renderer: %s", app->info.renderer.c_str());
+        ImGui::Text("OpenGL vendor: %s", app->info.vendor.c_str());
+        ImGui::Text("OpenGL GLSL version: %s", app->info.glslVersion.c_str());
+        ImGui::Text("OpenGL %d extensions:", app->info.numExtensions);
+        for (int i = 0; i < app->info.numExtensions; ++i)
+        {
+            ImGui::Text("\t%s", app->info.extensions[i].c_str());
+        }
     }
     ImGui::End();
 }
@@ -437,8 +440,6 @@ GLuint FindVAO(Mesh& mesh, u32 submeshIndex, const Program& program)
                 break;
             }
         }
-
-        //assert(attributeWasLinked);
     }
 
     glBindVertexArray(0);
