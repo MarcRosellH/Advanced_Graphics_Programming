@@ -2,6 +2,20 @@
 // engine.h: This file contains the types and functions relative to the engine.
 //
 
+/*
+* TODOs:
+* - Comment all code
+* - Change update correctly Entity and Camera structs
+* - Functions to get and set position/rotation/scale in mat4
+* - Check struct alignments and alignment in video memory
+* - Point light creation
+* - Directional light creation
+* - Framebuffers and different outputs (albedo, normals, position, depth) -> to render later in texture
+* - Set all process as deferred rendering
+* - Create ImGui combo menu to manipulate positions, element materials, lights...
+* - Create camera navigation throughout scene
+*/
+
 #pragma once
 
 #define BINDING(b) b
@@ -106,20 +120,11 @@ struct Material
     u32         bumpTextureIdx;
 };
 
-struct Transform
-{
-    vec3 position;
-    vec3 rotation;
-    vec3 scale;
-    bool updated = true;
-};
-
 struct Camera
 {
     glm::mat4   projection;
     glm::mat4   view;
     vec3        position;
-    bool        updated = false;
 };
 
 enum Mode
@@ -140,26 +145,27 @@ struct OpenGLInfo
     std::string  version;
     std::string  renderer;
     std::string  vendor;
-    std::string  glslVerstion;
+    std::string  glslVersion;
     GLint        numExtensions;
     std::string* extensions;
 };
 
 struct Entity
 {
-    Transform   transform;
     glm::mat4   worldMatrix;
-    u32         model;
+    u32         modelIdx;
     u32         localParamsOffset;
     u32         localParamsSize;
 };
 
 struct Light
 {
-    int     type;
+    u32     type;
     vec3    color;
     vec3    position;
+    vec3    direction;
     float   range;
+    float   intensity;
 };
 
 struct Buffer
@@ -180,10 +186,6 @@ struct App
     // Input
     Input input;
 
-    // Graphics
-    char gpuName[64];
-    char openGlVersion[64];
-
     ivec2 displaySize;
 
     // Model resources
@@ -193,11 +195,15 @@ struct App
     std::vector<Mesh>       meshes;
     std::vector<Model>      models;
 
+    // Model indices
+    u32 patrickModelIdx;
+    u32 roomModelIdx;
+
     // Program indices
     u32 texturedGeometryProgramIdx;
     u32 texturedMeshProgramIdx;
     
-    // texture indices
+    // Texture indices
     u32 diceTexIdx;
     u32 whiteTexIdx;
     u32 blackTexIdx;
@@ -235,7 +241,7 @@ struct App
     GLint   uniformBlockAlignment;
     Buffer  uniformBuffer;
 
-    // TO delete
+    // Final quad rendering (deferred)
     const VertexV3V2 vertices[4] = {
         {vec3(-0.5,-0.5, 0.0),vec2(0.0,0.0)},
         {vec3(0.5,-0.5, 0.0),vec2(1.0,0.0)},
@@ -262,6 +268,6 @@ GLuint FindVAO(Mesh& mesh, u32 submeshIndex, const Program& program);
 
 u8 GetAttribComponentCount(const GLenum& type);
 
-glm::mat4 TransformPositionRotationScale(const Transform& t);
-
 void OnGlError(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
+
+glm::mat4 MatrixFromPositionRotationScale(const vec3& position, const vec3& rotation, const vec3& scale);

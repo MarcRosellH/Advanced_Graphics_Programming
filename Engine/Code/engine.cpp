@@ -199,7 +199,7 @@ void Init(App* app)
     app->info.vendor = (char*)(glGetString(GL_VENDOR));
 
     // Get and save glsl version
-    app->info.glslVerstion = (char*)(glGetString(GL_SHADING_LANGUAGE_VERSION));
+    app->info.glslVersion = (char*)(glGetString(GL_SHADING_LANGUAGE_VERSION));
 
     // Get and save number of extensions and extension names
     glGetIntegerv(GL_NUM_EXTENSIONS, &app->info.numExtensions);
@@ -209,7 +209,7 @@ void Init(App* app)
         app->info.extensions[i] = (char*)glGetStringi(GL_EXTENSIONS, GLuint(i));
     }
 
-    /*// Geometry
+    // Geometry
     glGenBuffers(1, &app->embeddedVertices);
     glBindBuffer(GL_ARRAY_BUFFER, app->embeddedVertices);
     glBufferData(GL_ARRAY_BUFFER, sizeof(app->vertices), app->vertices, GL_STATIC_DRAW);
@@ -230,13 +230,12 @@ void Init(App* app)
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, app->embeddedElements);
     glBindVertexArray(0);
-    */
 
-    /*
     app->texturedGeometryProgramIdx = LoadProgram(app, "simple.glsl", "SHOW_TEXTURED_MESH");
     Program& texturedGeometryProgram = app->programs[app->texturedGeometryProgramIdx];
     app->programUniformTexture = glGetUniformLocation(texturedGeometryProgram.handle, "uTexture");
 
+    /*
     app->diceTexIdx = LoadTexture2D(app, "dice.png");
     app->whiteTexIdx = LoadTexture2D(app, "color_white.png");
     app->blackTexIdx = LoadTexture2D(app, "color_black.png");
@@ -250,15 +249,12 @@ void Init(App* app)
 
     app->uniformBuffer = CreateConstantBuffer(app->maxUniformBufferSize);
 
+    // Load models
+    app->patrickModelIdx = LoadModel(app, "Patrick/Patrick.obj");
+    app->roomModelIdx = LoadModel(app, "Room/Room #1.obj");
+
     // Entities initalization
-    Entity m;
-    m.transform.position = vec3(2.5F, 1.5F, -2.0F);
-    m.transform.rotation = vec3(0.F, 0.F, 0.F);
-    m.transform.scale = vec3(1.F, 1.F, 1.F);
-    m.worldMatrix = TransformPositionRotationScale(m.transform);
-    m.transform.updated = false;
-    m.model = LoadModel(app, "Patrick/Patrick.obj");
-    app->entities.push_back(m);
+    app->entities.push_back(Entity{ MatrixFromPositionRotationScale(vec3(0,0,0),vec3(0,0,0),vec3(1,1,1)), app->patrickModelIdx, });
 
     u32 bufferHead = 0;
     for (u32 it = 0; it < app->entities.size(); ++it)
@@ -276,7 +272,6 @@ void Init(App* app)
     // Camera initialization
     app->cam.projection = glm::perspective(glm::radians(60.F), (float)app->displaySize.x / (float)app->displaySize.y, 0.1F, 1000.F);
     app->cam.view = glm::lookAt(app->cam.position, vec3(1.F, 1.F, 1.F), vec3(0.F, 1.F, 0.F));
-    app->cam.updated = false;
 
     // Shader loading and attribute management
     app->texturedMeshProgramIdx = LoadProgram(app, "simple.glsl", "SHOW_TEXTURED_MESH");
@@ -314,7 +309,7 @@ void Gui(App* app)
     ImGui::Text("OpenGL version: %s", app->info.version.c_str());
     ImGui::Text("OpenGL renderer: %s", app->info.renderer.c_str());
     ImGui::Text("OpenGL vendor: %s", app->info.vendor.c_str());
-    ImGui::Text("OpenGL GLSL version: %s", app->info.glslVerstion.c_str());
+    ImGui::Text("OpenGL GLSL version: %s", app->info.glslVersion.c_str());
     ImGui::Text("OpenGL %d extensions:", app->info.numExtensions);
     for (int i = 0; i < app->info.numExtensions; ++i)
     {
@@ -338,15 +333,6 @@ void Update(App* app)
             const char* programName = program.programName.c_str();
             program.handle = CreateProgramFromSource(programSource, programName);
             program.lastWriteTimestamp = currentTimestamp;
-        }
-    }
-
-    for (u32 it = 0; it < app->entities.size(); ++it)
-    {
-        if (app->entities[it].transform.updated)
-        {
-            app->entities[it].worldMatrix = TransformPositionRotationScale(app->entities[it].transform);
-            app->entities[it].transform.updated = false;
         }
     }
 }
@@ -388,7 +374,7 @@ void Render(App* app)
 
         for (u32 it = 0; it < app->entities.size(); ++it)
         {
-            Model& model = app->models[app->entities[it].model];
+            Model& model = app->models[app->entities[it].modelIdx];
             Mesh& mesh = app->meshes[model.meshIdx];
 
             for (u32 i = 0; i < mesh.submeshes.size(); ++i)
@@ -502,6 +488,16 @@ void OnGlError(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei l
     }
 }
 
+glm::mat4 MatrixFromPositionRotationScale(const vec3& position, const vec3& rotation, const vec3& scale)
+{
+    glm::mat4 ret = glm::translate(position);
+    glm::vec3 radianRotation = glm::radians(rotation);
+    ret = glm::rotate(ret, radianRotation.x, glm::vec3(1.F, 0.F, 0.F));
+    ret = glm::rotate(ret, radianRotation.y, glm::vec3(0.F, 1.F, 0.F));
+    ret = glm::rotate(ret, radianRotation.z, glm::vec3(0.F, 0.F, 1.F));
+    return glm::scale(ret, scale);
+}
+
 u8 GetAttribComponentCount(const GLenum& type)
 {
     switch (type)
@@ -546,14 +542,4 @@ u8 GetAttribComponentCount(const GLenum& type)
     // default should return always 0 if no defined type is sent in
     // but let's be sure
     return 0;
-}
-
-glm::mat4 TransformPositionRotationScale(const Transform& t)
-{
-    glm::mat4 transform = glm::translate(t.position);
-    glm::vec3 radiaRot = glm::radians(t.rotation);
-    transform = glm::rotate(transform, radiaRot.x, glm::vec3(1.F, 0.F, 0.F));
-    transform = glm::rotate(transform, radiaRot.y, glm::vec3(0.F, 1.F, 0.F));
-    transform = glm::rotate(transform, radiaRot.y, glm::vec3(0.F, 0.F, 1.F));
-    return glm::scale(transform, t.scale);
 }
