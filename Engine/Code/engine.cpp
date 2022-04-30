@@ -231,7 +231,7 @@ void Init(App* app)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, app->embeddedElements);
     glBindVertexArray(0);
 
-    app->texturedGeometryProgramIdx = LoadProgram(app, "simple.glsl", "SHOW_TEXTURED_MESH");
+    app->texturedGeometryProgramIdx = LoadProgram(app, "shaders.glsl", "SHOW_TEXTURED_MESH");
     Program& texturedGeometryProgram = app->programs[app->texturedGeometryProgramIdx];
     app->programUniformTexture = glGetUniformLocation(texturedGeometryProgram.handle, "uTexture");
 
@@ -251,30 +251,19 @@ void Init(App* app)
 
     // Load models
     app->patrickModelIdx = LoadModel(app, "Patrick/Patrick.obj");
-    app->roomModelIdx = LoadModel(app, "Room/Room #1.obj");
+    //app->roomModelIdx = LoadModel(app, "Room/Room #1.obj");
 
     // Entities initalization
-    app->entities.push_back(Entity{ MatrixFromPositionRotationScale(vec3(0,3,0),vec3(2,0,2),vec3(1,1,1)), app->patrickModelIdx, });
-
-    u32 bufferHead = 0;
-    for (u32 it = 0; it < app->entities.size(); ++it)
-    {
-       
-        app->entities[it].localParamsOffset = bufferHead;
-
-        // Add mat4 size for worldMatrix
-        bufferHead += sizeof(glm::mat4);
-        // Add mat4 size for worldViewProjectionMatrix
-        bufferHead += sizeof(glm::mat4);
-
-    }
+    app->entities.push_back(Entity{ vec3(-3,0,0), vec3(90,0,0), vec3(0.5,0.5,0.5), app->patrickModelIdx });
+    app->entities.push_back(Entity{ vec3(0,0,0), vec3(0,0,0), vec3(1,1,1), app->patrickModelIdx });
     
     // Camera initialization
+    app->cam.position = vec3(0, 0, 6);
     app->cam.projection = glm::perspective(glm::radians(60.F), (float)app->displaySize.x / (float)app->displaySize.y, 0.1F, 1000.F);
-    app->cam.view = glm::lookAt(app->cam.position, vec3(1.F, 1.F, 1.F), vec3(0.F, 1.F, 0.F));
+    app->cam.view = glm::lookAt(app->cam.position, vec3(0.F, 0.F, 0.F), vec3(0.F, 1.F, 0.F));
 
     // Shader loading and attribute management
-    app->texturedMeshProgramIdx = LoadProgram(app, "simple.glsl", "SHOW_TEXTURED_MESH");
+    app->texturedMeshProgramIdx = LoadProgram(app, "shaders.glsl", "SHOW_TEXTURED_MESH");
     Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
     GLint attributeCount;
     glGetProgramiv(texturedMeshProgram.handle, GL_ACTIVE_ATTRIBUTES, &attributeCount);
@@ -323,7 +312,8 @@ void Gui(App* app)
 
 void Update(App* app)
 {
-    // You can handle app->input keyboard/mouse here
+    // TODO: Input
+
     // Shader hot-reload
     for (u64 i = 0; i < app->programs.size(); ++i)
     {
@@ -338,6 +328,39 @@ void Update(App* app)
             program.lastWriteTimestamp = currentTimestamp;
         }
     }
+
+    // Push buffer parameters
+    BindBuffer(app->uniformBuffer);
+    app->uniformBuffer.data = (u8*)glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+    app->uniformBuffer.head = 0;
+
+    // Global parameters
+    app->globalParamsOffset = app->uniformBuffer.head;
+
+
+    app->globalParamsSize = app->uniformBuffer.head - app->globalParamsOffset;
+
+    // Local parameters
+    for (u32 i = 0; i < app->entities.size(); ++i)
+    {
+        AlignHead(app->uniformBuffer, app->uniformBlockAlignment);
+
+        Entity& ref = app->entities[i];
+
+        glm::mat4 world = MatrixFromPositionRotationScale(ref.position, ref.rotation, ref.scale);
+        glm::mat4 worldViewProjectionMatrix = app->cam.projection * app->cam.view * world;
+
+        ref.localParamsOffset = app->uniformBuffer.head;
+
+        PushMat4(app->uniformBuffer, world);
+        PushMat4(app->uniformBuffer, worldViewProjectionMatrix);
+
+        ref.localParamsSize = app->uniformBuffer.head - ref.localParamsOffset;
+    }
+
+    // Unmap buffer
+    glUnmapBuffer(GL_UNIFORM_BUFFER);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void Render(App* app)
@@ -377,8 +400,11 @@ void Render(App* app)
 
         for (u32 it = 0; it < app->entities.size(); ++it)
         {
-            Model& model = app->models[app->entities[it].modelIdx];
+            Entity& ref = app->entities[it];
+            Model& model = app->models[ref.modelIdx];
             Mesh& mesh = app->meshes[model.meshIdx];
+
+            glBindBufferRange(GL_UNIFORM_BUFFER, BINDING(1), app->uniformBuffer.handle, ref.localParamsOffset, ref.localParamsSize);
 
             for (u32 i = 0; i < mesh.submeshes.size(); ++i)
             {

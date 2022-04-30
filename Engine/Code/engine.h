@@ -152,7 +152,9 @@ struct OpenGLInfo
 
 struct Entity
 {
-    glm::mat4   worldMatrix;
+    vec3        position;
+    vec3        rotation;
+    vec3        scale;
     u32         modelIdx;
     u32         localParamsOffset;
     u32         localParamsSize;
@@ -240,6 +242,8 @@ struct App
     GLint   maxUniformBufferSize;
     GLint   uniformBlockAlignment;
     Buffer  uniformBuffer;
+    u32     globalParamsOffset;
+    u32     globalParamsSize;
 
     // Final quad rendering (deferred)
     const VertexV3V2 vertices[4] = {
