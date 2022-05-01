@@ -160,14 +160,20 @@ struct Entity
     u32         localParamsSize;
 };
 
+enum LightType
+{
+    LIGHTTYPE_DIRECTIONAL,
+    LIGHTTYPE_POINT
+};
+
 struct Light
 {
-    u32     type;
-    vec3    color;
-    vec3    position;
-    vec3    direction;
-    float   range;
-    float   intensity;
+    LightType   type;
+    vec3        color;
+    vec3        position;
+    vec3        direction;
+    float       radius;
+    float       intensity;
 };
 
 struct Buffer
@@ -214,6 +220,8 @@ struct App
 
     // Entities
     std::vector<Entity>     entities;
+    // Lights
+    std::vector<Light>      lights;
 
     // Mode
     Mode mode;

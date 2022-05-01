@@ -256,6 +256,10 @@ void Init(App* app)
     // Entities initalization
     app->entities.push_back(Entity{ vec3(-3,0,0), vec3(90,0,0), vec3(0.5,0.5,0.5), app->patrickModelIdx });
     app->entities.push_back(Entity{ vec3(0,0,0), vec3(0,0,0), vec3(1,1,1), app->patrickModelIdx });
+
+    // Lights initialization
+    app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(1,0,0), vec3(1,1,1), vec3(0,0,0), 0.0F, 1.0F });
+    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,0,0), vec3(1,1,1), vec3(5,0,0), 3.0F, 1.0F });
     
     // Camera initialization
     app->cam.position = vec3(0, 0, 6);
@@ -295,6 +299,49 @@ void Gui(App* app)
 {
     ImGui::Begin("Menu");
     ImGui::Text("FPS: %f", 1.0f / app->deltaTime);
+    if (ImGui::CollapsingHeader("Lights"))
+    {
+        std::string name;
+        for (u32 i = 0; i < app->lights.size(); ++i)
+        {
+            Light& l = app->lights[i];
+            name = (l.type == LIGHTTYPE_DIRECTIONAL) ? ("Directional Light " + std::to_string(i)):
+                                                        ("Point Light " + std::to_string(i));
+            if (ImGui::TreeNode(name.c_str()))
+            {
+                // Position edit
+                ImGui::DragFloat3("Position", (float*)&l.position, 0.01F);
+                ImGui::Spacing();
+
+                // Direction edit
+                ImGui::DragFloat3("Direction", (float*)&l.direction, 0.01F);
+                ImGui::Spacing();
+
+                // Color edit
+                float c[3] = { l.color.r, l.color.g, l.color.b };
+                ImGui::ColorEdit3("Color", c);
+                l.color.r = c[0];
+                l.color.g = c[1];
+                l.color.b = c[2];
+                ImGui::Spacing();
+
+                // Intensity edit
+                ImGui::DragFloat("Intensity", &l.intensity, 0.01F, 0.0F, 0.0F, "%.04f");
+                l.intensity = (l.intensity < 0.0F) ? 0.0F : l.intensity;
+                ImGui::Spacing();
+
+                // Radius edit
+                if (l.type == LIGHTTYPE_POINT)
+                {
+                    ImGui::DragFloat("Radius", &l.radius, 0.01F, 0.0F, 0.0F, "%.04f");
+                    l.radius = (l.radius < 0.0F) ? 0.0F : l.radius;
+                    ImGui::Spacing();
+                }
+
+                ImGui::TreePop();
+            }
+        }
+    }
     if (ImGui::CollapsingHeader("Info"))
     {
         ImGui::Text("OpenGL version: %s", app->info.version.c_str());
@@ -337,6 +384,19 @@ void Update(App* app)
     // Global parameters
     app->globalParamsOffset = app->uniformBuffer.head;
 
+    PushVec3(app->uniformBuffer, app->cam.position);
+    PushUInt(app->uniformBuffer, app->lights.size());
+
+    for (u32 i = 0; i < app->lights.size(); ++i)
+    {
+        AlignHead(app->uniformBuffer, sizeof(vec4));
+
+        Light& light = app->lights[i];
+        PushUInt(app->uniformBuffer, light.type);
+        PushVec3(app->uniformBuffer, light.color);
+        PushVec3(app->uniformBuffer, light.direction);
+        PushVec3(app->uniformBuffer, light.position);
+    }
 
     app->globalParamsSize = app->uniformBuffer.head - app->globalParamsOffset;
 
