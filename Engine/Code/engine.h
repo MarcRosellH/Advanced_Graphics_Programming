@@ -131,6 +131,7 @@ enum Mode
 {
     Mode_TexturedQuad,
     Mode_TexturedMesh,
+    Mode_Deferred,
     Mode_Count
 };
 
@@ -185,6 +186,15 @@ struct Buffer
     void*   data;
 };
 
+enum class FBOAttachmentType
+{
+    POSITION,
+    NORMALS,
+    DIFFUSE,
+    DEPTH,
+    FINAL
+};
+
 struct App
 {
     // Loop
@@ -210,6 +220,10 @@ struct App
     // Program indices
     u32 texturedGeometryProgramIdx;
     u32 texturedMeshProgramIdx;
+    // Deferred program indices
+    u32 deferredGeometryPassProgramIdx;
+    u32 deferredLightingPassProgramIdx;
+    u32 deferredLightProgramIdx;
     
     // Texture indices
     u32 diceTexIdx;
@@ -236,6 +250,29 @@ struct App
 
     // Uniforms
     GLint texturedMeshProgram_uTexture;
+
+    GLint deferredGeometryProgram_uTexture;
+
+    GLint deferredLightingProgram_uGPosition;
+    GLint deferredLightingProgram_uGNormals;
+    GLint deferredLightingProgram_uGDiffuse;
+
+    GLint deferredLightProgram_uProjection;
+    GLint deferredLightProgram_uView;
+    GLint deferredLightProgram_uModel;
+    GLint deferredLightProgram_uLightColor;
+
+    // Framebuffer
+    GLuint gBuffer;
+    GLuint positionAttachmentHandle;
+    GLuint normalsAttachmentHandle;
+    GLuint diffuseAttachmentHandle;
+    GLuint depthAttachmentHandle;
+
+    GLuint fBuffer;
+    GLuint finalRenderAttachmentHandle;
+
+    FBOAttachmentType currentFBOAttachmentType;
 
     // VAO object to link our screen filling quad with our textured quad shader
     GLuint vao;

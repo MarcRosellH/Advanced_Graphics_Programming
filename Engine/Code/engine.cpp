@@ -458,6 +458,8 @@ void Render(App* app)
         Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
         glUseProgram(texturedMeshProgram.handle);
 
+        glBindBufferRange(GL_UNIFORM_BUFFER, BINDING(0), app->uniformBuffer.handle, app->globalParamsOffset, app->globalParamsSize);
+
         for (u32 it = 0; it < app->entities.size(); ++it)
         {
             Entity& ref = app->entities[it];
