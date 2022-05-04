@@ -291,14 +291,8 @@ struct App
     u32     globalParamsSize;
 
     // Final quad rendering (deferred)
-    const VertexV3V2 vertices[4] = {
-        {vec3(-0.5,-0.5, 0.0),vec2(0.0,0.0)},
-        {vec3(0.5,-0.5, 0.0),vec2(1.0,0.0)},
-        {vec3(0.5, 0.5, 0.0),vec2(1.0,1.0)},
-        {vec3(-0.5, 0.5, 0.0),vec2(0.0,1.0)}
-    };
-
-    const u16 indices[6] = { 0,1,2,0,2,3 };
+    GLuint quadVAO = 0u;
+    GLuint quadVBO;
 };
 
 void Init(App* app);
@@ -320,3 +314,5 @@ u8 GetAttribComponentCount(const GLenum& type);
 void OnGlError(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 
 glm::mat4 MatrixFromPositionRotationScale(const vec3& position, const vec3& rotation, const vec3& scale);
+
+void RenderQuad(App* app);
