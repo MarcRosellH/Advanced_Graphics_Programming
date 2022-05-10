@@ -444,6 +444,8 @@ void Init(App* app)
     GLenum drawBuffersFBuffer[] = { GL_COLOR_ATTACHMENT3 };
     glDrawBuffers(ARRAY_COUNT(drawBuffersFBuffer), drawBuffersFBuffer);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     GLenum frameBufferStatusFBuffer = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (frameBufferStatusFBuffer != GL_FRAMEBUFFER_COMPLETE)
     {
@@ -462,7 +464,7 @@ void Init(App* app)
         }
     }
 
-    app->mode = Mode_TexturedMesh;
+    app->mode = Mode_Deferred;
 }
 
 void Gui(App* app)
