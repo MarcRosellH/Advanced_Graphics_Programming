@@ -7,9 +7,6 @@
 * - Comment all code
 * - Change update correctly Entity and Camera structs
 * - Functions to get and set position/rotation/scale in mat4
-* - Check struct alignments and alignment in video memory
-* - Point light creation
-* - Directional light creation
 * - Framebuffers and different outputs (albedo, normals, position, depth) -> to render later in texture
 * - Set all process as deferred rendering
 * - Create ImGui combo menu to manipulate positions, element materials, lights...
@@ -125,6 +122,7 @@ struct Camera
     glm::mat4   projection;
     glm::mat4   view;
     vec3        position;
+    vec3        rotation;
 };
 
 enum Mode
