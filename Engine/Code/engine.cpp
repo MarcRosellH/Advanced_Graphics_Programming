@@ -464,7 +464,7 @@ void Init(App* app)
         }
     }
 
-    app->mode = Mode_Deferred;
+    app->mode = Mode_TexturedMesh;
 }
 
 void Gui(App* app)
