@@ -260,9 +260,7 @@ void Init(App* app)
     app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,0,0), vec3(1,1,1), vec3(5,0,0), 3.0F, 1.0F });
     
     // Camera initialization
-    app->cam.position = vec3(0, 0, 6);
-    app->cam.projection = glm::perspective(glm::radians(60.F), (float)app->displaySize.x / (float)app->displaySize.y, 0.1F, 1000.F);
-    app->cam.view = glm::lookAt(app->cam.position, vec3(0.F, 0.F, 0.F), vec3(0.F, 1.F, 0.F));
+    SetCamera(app->cam);
 
     // Shader loading and attribute management 
     // [Forward Render]
@@ -531,6 +529,9 @@ void Gui(App* app)
 
 void Update(App* app)
 {
+
+    HandleInput(app);
+
     // Shader hot-reload
     for (u64 i = 0; i < app->programs.size(); ++i)
     {
@@ -578,7 +579,7 @@ void Update(App* app)
         Entity& ref = app->entities[i];
 
         glm::mat4 world = MatrixFromPositionRotationScale(ref.position, ref.rotation, ref.scale);
-        glm::mat4 worldViewProjectionMatrix = app->cam.projection * app->cam.view * world;
+        glm::mat4 worldViewProjectionMatrix = GetProjectionMatrix(app->cam) * GetViewMatrix(app->cam) * world;
 
         ref.localParamsOffset = app->uniformBuffer.head;
 
@@ -889,6 +890,66 @@ void RenderQuad(App* app)
     glBindVertexArray(0);
 
 
+}
+
+void SetCamera(Camera& cam)
+{
+    cam.position = vec3(0.F, 0.F, 6.F);
+    cam.front = vec3(0.F, 0.F, -1.F);
+    cam.up = vec3(0.F, 1.F, 0.F);
+    cam.worldUp = cam.up;
+
+    cam.yaw = -90.F;
+    cam.pitch = 0.F;
+
+    cam.speed = 0.25F;
+}
+
+void SetAspectRatio(Camera& cam, float dsX, float dsY)
+{
+    cam.aspectRatio = dsX / dsY;
+}
+
+glm::mat4 GetViewMatrix(Camera& cam)
+{
+    return glm::lookAt(cam.position, cam.position + cam.front, cam.up);
+}
+
+glm::mat4 GetProjectionMatrix(Camera& cam)
+{
+    return glm::perspective(glm::radians(cam.fov), cam.aspectRatio, cam.nearPlane, cam.farPlane);
+}
+
+void HandleInput(App* app)
+{
+    if (app->input.keys[K_W] == BUTTON_PRESSED)app->cam.position += (app->cam.front * app->cam.speed);      // Forward
+    if(app->input.keys[K_A] == BUTTON_PRESSED)app->cam.position -= (app->cam.right * app->cam.speed);       // Left
+    if(app->input.keys[K_S] == BUTTON_PRESSED)app->cam.position -= (app->cam.front * app->cam.speed);       // Backward
+    if(app->input.keys[K_D] == BUTTON_PRESSED)app->cam.position += (app->cam.right * app->cam.speed);       // Right
+    if(app->input.keys[K_X] == BUTTON_PRESSED)app->cam.position += (app->cam.up * app->cam.speed);          // Up
+    if(app->input.keys[K_C] == BUTTON_PRESSED)app->cam.position -= (app->cam.up * app->cam.speed);          // Down
+
+    if (app->input.mouseButtons[LEFT] == BUTTON_PRESSED)
+    {
+        float xOS = app->input.mouseDelta.x * 0.15F; // 0.1F is the sensitivity
+        float yOS = app->input.mouseDelta.y * 0.15F;
+
+        app->cam.yaw += xOS;
+        app->cam.pitch += yOS;
+
+        app->cam.pitch = (app->cam.pitch > 89.F) ? 89.F : app->cam.pitch;
+        app->cam.pitch = (app->cam.pitch < -89.F) ? -89.F : app->cam.pitch;
+
+        glm::vec3 newFront = vec3(
+            cos(glm::radians(app->cam.yaw)) * cos(glm::radians(app->cam.pitch)),
+            sin(glm::radians(app->cam.pitch)),
+            sin(glm::radians(app->cam.yaw)) * cos(glm::radians(app->cam.pitch)));
+
+        app->cam.front = glm::normalize(newFront);
+        app->cam.right = glm::normalize(glm::cross(app->cam.front, app->cam.worldUp));
+        app->cam.up = glm::normalize(glm::cross(app->cam.right, app->cam.front));
+    }
+    SetAspectRatio(app->cam, (float)app->displaySize.x, (float)app->displaySize.y);
 }
 
 u8 GetAttribComponentCount(const GLenum& type)

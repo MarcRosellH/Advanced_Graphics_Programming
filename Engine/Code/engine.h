@@ -10,7 +10,7 @@
 * - Framebuffers and different outputs (albedo, normals, position, depth) -> to render later in texture
 * - Set all process as deferred rendering
 * - Create ImGui combo menu to manipulate positions, element materials, lights...
-* - Create camera navigation throughout scene
+* - Correct rendering for deferred
 */
 
 #pragma once
@@ -119,10 +119,20 @@ struct Material
 
 struct Camera
 {
-    glm::mat4   projection;
-    glm::mat4   view;
-    vec3        position;
-    vec3        rotation;
+    vec3    position;
+    vec3    front;
+    vec3    up;
+    vec3    right;
+    vec3    worldUp;
+
+    float   yaw;
+    float   pitch;
+    float   fov = 60.F;
+    float   nearPlane = 0.1F;
+    float   farPlane = 1000.0F;
+    float   aspectRatio;
+
+    float   speed;
 };
 
 enum Mode
@@ -314,3 +324,13 @@ void OnGlError(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei l
 glm::mat4 MatrixFromPositionRotationScale(const vec3& position, const vec3& rotation, const vec3& scale);
 
 void RenderQuad(App* app);
+
+void SetCamera(Camera& cam);
+
+void SetAspectRatio(Camera& cam, float dsX, float dsY);
+
+glm::mat4 GetViewMatrix(Camera& cam);
+
+glm::mat4 GetProjectionMatrix(Camera& cam);
+
+void HandleInput(App* app);
