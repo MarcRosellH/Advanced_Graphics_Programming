@@ -256,19 +256,21 @@ void Init(App* app)
     app->entities.push_back(Entity{ vec3(0,0,0), vec3(0,0,0), vec3(1,1,1), app->patrickModelIdx });
 
     // Lights initialization
-    app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(1,0,0), vec3(1,1,1), vec3(0,0,0), 100.0F, 100.0F });
-    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,1,1), vec3(0,0,1), vec3(5,0,0), 3.0F, 1.0F });
+    app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(1,0,0), vec3(0,0,0), vec3(0,0,0), 100.0F, 100.0F });
+    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,1,1), vec3(0,0,0), vec3(5,0,0), 3.0F, 1.0F });
     
     // Camera initialization
     SetCamera(app->cam);
 
-    app->deferredLightProgramIdx = LoadProgram(app, "shaders.glsl", "LIGHT_VOLUME");
+    LoadSphere(app);
+
+    app->deferredLightProgramIdx = LoadProgram(app, "shaders.glsl", "LIGHT_DEBUG");
     Program& deferredLightProgram = app->programs[app->deferredLightProgramIdx];
 
-    GLint deferred_light_attribute_count;
-    glGetProgramiv(deferredLightProgram.handle, GL_ACTIVE_ATTRIBUTES, &deferred_light_attribute_count);
+    GLint defLightProgramAttrCount;
+    glGetProgramiv(deferredLightProgram.handle, GL_ACTIVE_ATTRIBUTES, &defLightProgramAttrCount);
 
-    for (int i = 0; i < deferred_light_attribute_count; ++i)
+    for (int i = 0; i < defLightProgramAttrCount; ++i)
     {
         GLchar attribute_name[32];
         GLsizei attribute_length;
@@ -506,6 +508,11 @@ void Gui(App* app)
     ImGui::Begin("DockSpace Demo", &p_open, window_flags);
     ImGui::PopStyleVar();
 
+    if ((dockspace_flags & ImGuiDockNodeFlags_NoSplit) != 0) { dockspace_flags ^= ImGuiDockNodeFlags_NoSplit; }
+    if ((dockspace_flags & ImGuiDockNodeFlags_NoResize) != 0) { dockspace_flags ^= ImGuiDockNodeFlags_NoResize; }
+    if ((dockspace_flags & ImGuiDockNodeFlags_NoDockingInCentralNode) != 0) { dockspace_flags ^= ImGuiDockNodeFlags_NoDockingInCentralNode; }
+    if ((dockspace_flags & ImGuiDockNodeFlags_AutoHideTabBar) != 0) { dockspace_flags ^= ImGuiDockNodeFlags_AutoHideTabBar; }
+    if ((dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode) != 0) { dockspace_flags ^= ImGuiDockNodeFlags_PassthruCentralNode; }
 
     // DockSpace
     ImGuiIO& io = ImGui::GetIO();
@@ -894,7 +901,7 @@ void Render(App* app)
 
             glUseProgram(0);
 
-            // Render lights
+            // Render debug lights
             Program& deferredLightProgram = app->programs[app->deferredLightProgramIdx];
             glUseProgram(deferredLightProgram.handle);
 
@@ -1245,7 +1252,7 @@ void LoadSphere(App* app)
         }
     }
 
-    glBindVertexArray(app->sphereIdxCount);
+    glBindVertexArray(app->sphereVAO);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
     glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data[0], GL_STATIC_DRAW);
