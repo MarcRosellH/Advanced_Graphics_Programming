@@ -256,7 +256,7 @@ void Init(App* app)
     app->entities.push_back(Entity{ vec3(0,0,0), vec3(0,0,0), vec3(1,1,1), app->patrickModelIdx });
 
     // Lights initialization
-    app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(1,0,0), vec3(0,0,0), vec3(0,0,0), 100.0F, 100.0F });
+    //app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(1,0,0), vec3(0,0,0), vec3(0,0,0), 100.0F, 100.0F });
     app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,1,1), vec3(0,0,0), vec3(5,0,0), 3.0F, 1.0F });
     
     // Camera initialization
@@ -508,12 +508,6 @@ void Gui(App* app)
     ImGui::Begin("DockSpace Demo", &p_open, window_flags);
     ImGui::PopStyleVar();
 
-    if ((dockspace_flags & ImGuiDockNodeFlags_NoSplit) != 0) { dockspace_flags ^= ImGuiDockNodeFlags_NoSplit; }
-    if ((dockspace_flags & ImGuiDockNodeFlags_NoResize) != 0) { dockspace_flags ^= ImGuiDockNodeFlags_NoResize; }
-    if ((dockspace_flags & ImGuiDockNodeFlags_NoDockingInCentralNode) != 0) { dockspace_flags ^= ImGuiDockNodeFlags_NoDockingInCentralNode; }
-    if ((dockspace_flags & ImGuiDockNodeFlags_AutoHideTabBar) != 0) { dockspace_flags ^= ImGuiDockNodeFlags_AutoHideTabBar; }
-    if ((dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode) != 0) { dockspace_flags ^= ImGuiDockNodeFlags_PassthruCentralNode; }
-
     // DockSpace
     ImGuiIO& io = ImGui::GetIO();
     if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
@@ -704,7 +698,9 @@ void Update(App* app)
         PushUInt(app->uniformBuffer, light.type);
         PushVec3(app->uniformBuffer, light.color);
         PushVec3(app->uniformBuffer, light.direction);
+        PushFloat(app->uniformBuffer, light.intensity);
         PushVec3(app->uniformBuffer, light.position);
+        PushFloat(app->uniformBuffer, light.radius);
     }
 
     app->globalParamsSize = app->uniformBuffer.head - app->globalParamsOffset;
@@ -806,7 +802,7 @@ void Render(App* app)
             break;
         case Mode_Deferred:
             {
-            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+            glClearColor(0.f, 0.f, 0.f, 1.0f);
 
             /* First pass (geometry) */
 
@@ -863,7 +859,7 @@ void Render(App* app)
 
             glBindFramebuffer(GL_FRAMEBUFFER, app->fBuffer);
 
-            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+            glClearColor(0.f, 0.f, 0.f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             GLenum drawBuffersFBuffer[] = { GL_COLOR_ATTACHMENT3 };
