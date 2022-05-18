@@ -442,8 +442,6 @@ void Init(App* app)
     GLenum drawBuffersFBuffer[] = { GL_COLOR_ATTACHMENT3 };
     glDrawBuffers(ARRAY_COUNT(drawBuffersFBuffer), drawBuffersFBuffer);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
     GLenum frameBufferStatusFBuffer = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (frameBufferStatusFBuffer != GL_FRAMEBUFFER_COMPLETE)
     {
@@ -461,12 +459,39 @@ void Init(App* app)
         default: ELOG("Unknown framebuffer status error"); break;
         }
     }
-
-    app->mode = Mode_TexturedMesh;
+    app->currentFBOAttachmentType = FBOAttachmentType::FINAL;
+    app->mode = Mode_Deferred;
 }
 
 void Gui(App* app)
 {
+    static bool p_open = true;
+    static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->GetWorkPos());
+    ImGui::SetNextWindowSize(viewport->GetWorkSize());
+    ImGui::SetNextWindowViewport(viewport->ID);
+    window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+    if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+        window_flags |= ImGuiWindowFlags_NoBackground;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin("DockSpace Demo", &p_open, window_flags);
+    ImGui::PopStyleVar();
+
+
+    // DockSpace
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+    {
+        ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+        ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+    }
+
     ImGui::Begin("Menu");
     ImGui::Text("FPS: %f", 1.0f / app->deltaTime);
     if (ImGui::CollapsingHeader("Lights"))
@@ -512,6 +537,36 @@ void Gui(App* app)
             }
         }
     }
+    if (ImGui::CollapsingHeader("Render"))
+    {
+        const char* items[] = { "Position", "Normals", "Diffuse", "Depth", "Final" };
+        static const char* curr = items[4];
+        if (ImGui::BeginCombo("##combo", curr))
+        {
+            for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+            {
+                bool is_selected = (curr == items[n]);
+                if (ImGui::Selectable(items[n], is_selected))
+                    curr = items[n];
+                if (is_selected)
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
+
+                if (strcmp(curr, items[0]) == 0)
+                    app->currentFBOAttachmentType = FBOAttachmentType::POSITION;
+                if (strcmp(curr, items[1]) == 0)
+                    app->currentFBOAttachmentType = FBOAttachmentType::NORMALS;
+                if (strcmp(curr, items[2]) == 0)
+                    app->currentFBOAttachmentType = FBOAttachmentType::DIFFUSE;
+                if (strcmp(curr, items[3]) == 0)
+                    app->currentFBOAttachmentType = FBOAttachmentType::DEPTH;
+                if (strcmp(curr, items[4]) == 0)
+                    app->currentFBOAttachmentType = FBOAttachmentType::FINAL;
+            }
+            ImGui::EndCombo();
+        }
+    }
     if (ImGui::CollapsingHeader("Info"))
     {
         ImGui::Text("OpenGL version: %s", app->info.version.c_str());
@@ -524,7 +579,56 @@ void Gui(App* app)
             ImGui::Text("\t%s", app->info.extensions[i].c_str());
         }
     }
-    ImGui::End();
+
+    ImGui::End(); // End menu
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
+
+    ImGui::Begin("Scene");
+    ImVec2 size = ImGui::GetContentRegionAvail();
+    GLuint currentAttachment = 0;
+    switch (app->currentFBOAttachmentType)
+    {
+    case FBOAttachmentType::POSITION:
+    {
+        currentAttachment = app->positionAttachmentHandle;
+    }
+    break;
+
+    case FBOAttachmentType::NORMALS:
+    {
+        currentAttachment = app->normalsAttachmentHandle;
+    }
+    break;
+
+    case FBOAttachmentType::DIFFUSE:
+    {
+        currentAttachment = app->diffuseAttachmentHandle;
+    }
+    break;
+
+    case FBOAttachmentType::DEPTH:
+    {
+        currentAttachment = app->depthAttachmentHandle;
+    }
+    break;
+
+    case FBOAttachmentType::FINAL:
+    {
+        currentAttachment = app->finalRenderAttachmentHandle;
+    }
+    break;
+
+    default:
+    {} break;
+    }
+
+    ImGui::Image((ImTextureID)currentAttachment, size, { 0, 1 }, { 1, 0 });
+    ImGui::End(); // End scene
+
+    ImGui::PopStyleVar();
+
+    ImGui::End(); // End dockspace
 }
 
 void Update(App* app)
@@ -756,6 +860,7 @@ void Render(App* app)
                 glBlitFramebuffer(0, 0, app->displaySize.x, app->displaySize.x, 0, 0, app->displaySize.x, app->displaySize.x, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
                 glUseProgram(0);
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
             }
             break;
         default:
