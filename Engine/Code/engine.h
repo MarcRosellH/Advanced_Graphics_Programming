@@ -265,10 +265,10 @@ struct App
     GLint deferredLightingProgram_uGNormals;
     GLint deferredLightingProgram_uGDiffuse;
 
-    GLint deferredLightProgram_uProjection;
-    GLint deferredLightProgram_uView;
-    GLint deferredLightProgram_uModel;
-    GLint deferredLightProgram_uLightColor;
+    GLint debugLight_uProjection;
+    GLint debugLight_uView;
+    GLint debugLight_uModel;
+    GLint debugLight_uLightColor;
 
     // Framebuffer
     GLuint gBuffer;
@@ -291,6 +291,9 @@ struct App
     // Camera
     Camera cam;
 
+    glm::mat4 projectionMat;
+    glm::mat4 viewMat;
+
     // Uniform buffers data management
     GLint   maxUniformBufferSize;
     GLint   uniformBlockAlignment;
@@ -301,6 +304,11 @@ struct App
     // Final quad rendering (deferred)
     GLuint quadVAO = 0u;
     GLuint quadVBO;
+
+    GLuint sphereVAO = 0u;
+    GLuint sphereIdxCount;
+
+    bool isFocused = true;
 };
 
 void Init(App* app);
@@ -334,3 +342,7 @@ glm::mat4 GetViewMatrix(Camera& cam);
 glm::mat4 GetProjectionMatrix(Camera& cam);
 
 void HandleInput(App* app);
+
+void LoadSphere(App* app);
+
+void RenderSphere(App* app);
