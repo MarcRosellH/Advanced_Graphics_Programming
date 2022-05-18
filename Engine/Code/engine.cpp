@@ -252,12 +252,24 @@ void Init(App* app)
     //app->roomModelIdx = LoadModel(app, "Room/Room #1.obj");
 
     // Entities initalization
-    app->entities.push_back(Entity{ vec3(-3,0,0), vec3(90,0,0), vec3(0.5,0.5,0.5), app->patrickModelIdx });
+    app->entities.push_back(Entity{ vec3(6,0,0), vec3(90,0,0), vec3(1,1,1), app->patrickModelIdx });
+    app->entities.push_back(Entity{ vec3(-6,0,0), vec3(0,0,90), vec3(1,1,1), app->patrickModelIdx });
     app->entities.push_back(Entity{ vec3(0,0,0), vec3(0,0,0), vec3(1,1,1), app->patrickModelIdx });
+    app->entities.push_back(Entity{ vec3(6,0,-6), vec3(45,0,90), vec3(1,1,1), app->patrickModelIdx });
+    app->entities.push_back(Entity{ vec3(0,0,-6), vec3(0,90,0), vec3(1,1,1), app->patrickModelIdx });
+    app->entities.push_back(Entity{ vec3(-6,0,-6), vec3(45,45,45), vec3(1,1,1), app->patrickModelIdx });
+    app->entities.push_back(Entity{ vec3(0,0,-50), vec3(0,0,0), vec3(10,10,10), app->patrickModelIdx });
 
     // Lights initialization
-    //app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(1,0,0), vec3(0,0,0), vec3(0,0,0), 100.0F, 100.0F });
-    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,1,1), vec3(0,0,0), vec3(5,0,0), 3.0F, 1.0F });
+    app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(1,1,1), vec3(0,0,0), vec3(1,-1,1), 100.0F, 10.0F });
+    app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(0,0,1), vec3(0,0,0), vec3(0,0,1), 100.0F, 100.0F });
+    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,1,1), vec3(0,1,1), vec3(0,0,0), 5.0F, 1.0F });
+    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,1,0), vec3(6,1,1), vec3(0,0,0), 5.0F, 1.0F });
+    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,0,1), vec3(-6,1,1), vec3(0,0,0), 5.0F, 1.0F });
+    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,0,0), vec3(-6,1,-5), vec3(0,0,0), 5.0F, 1.0F });
+    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(0,1,1), vec3(0,0,-5), vec3(0,0,0), 5.0F, 1.0F });
+    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(0,1,0), vec3(6,0,-5), vec3(0,0,0), 5.0F, 1.0F });
+    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,0,0), vec3(0,0,-42), vec3(0,0,0), 30.0F, 1.0F });
     
     // Camera initialization
     SetCamera(app->cam);
@@ -348,9 +360,9 @@ void Init(App* app)
     // [Deferred Render] Lighting Pass Program
     app->deferredLightingPassProgramIdx = LoadProgram(app, "shaders.glsl", "DEFERRED_LIGHTING_PASS");
 
-    Program& deferredLightPassProgram = app->programs[app->deferredLightingPassProgramIdx];
+    Program& deferredLightingPassProgram = app->programs[app->deferredLightingPassProgramIdx];
     GLint deferredLightAttributeCount;
-    glGetProgramiv(deferredLightPassProgram.handle, GL_ACTIVE_ATTRIBUTES, &deferredLightAttributeCount);
+    glGetProgramiv(deferredLightingPassProgram.handle, GL_ACTIVE_ATTRIBUTES, &deferredLightAttributeCount);
 
     for (GLint i = 0; i < deferredLightAttributeCount; ++i)
     {
@@ -359,21 +371,21 @@ void Init(App* app)
         GLint attrSize;
         GLenum attrType;
 
-        glGetActiveAttrib(deferredLightPassProgram.handle, i,
+        glGetActiveAttrib(deferredLightingPassProgram.handle, i,
             ARRAY_COUNT(attrName),
             &attrLen,
             &attrSize,
             &attrType,
             attrName);
 
-        GLint attrLocation = glGetAttribLocation(deferredLightPassProgram.handle, attrName);
+        GLint attrLocation = glGetAttribLocation(deferredLightingPassProgram.handle, attrName);
 
-        deferredLightPassProgram.vertexInputLayout.attributes.push_back({ (u8)attrLocation, GetAttribComponentCount(attrType) });
+        deferredLightingPassProgram.vertexInputLayout.attributes.push_back({ (u8)attrLocation, GetAttribComponentCount(attrType) });
     }
 
-    app->deferredLightingProgram_uGPosition = glGetUniformLocation(deferredLightPassProgram.handle, "uGPosition");
-    app->deferredLightingProgram_uGNormals = glGetUniformLocation(deferredLightPassProgram.handle, "uGNormals");
-    app->deferredLightingProgram_uGDiffuse = glGetUniformLocation(deferredLightPassProgram.handle, "uGDiffuse");
+    app->deferredLightingProgram_uGPosition = glGetUniformLocation(deferredLightingPassProgram.handle, "uGPosition");
+    app->deferredLightingProgram_uGNormals = glGetUniformLocation(deferredLightingPassProgram.handle, "uGNormals");
+    app->deferredLightingProgram_uGDiffuse = glGetUniformLocation(deferredLightingPassProgram.handle, "uGDiffuse");
 
     // [Framebuffers]
 
@@ -518,6 +530,31 @@ void Gui(App* app)
 
     ImGui::Begin("Menu");
     ImGui::Text("FPS: %f", 1.0f / app->deltaTime);
+    if (ImGui::CollapsingHeader("Entities"))
+    {
+        std::string name;
+        for (u32 i = 0; i < app->entities.size(); ++i)
+        {
+            Entity& e = app->entities[i];
+            name = ("Entity " + std::to_string(i));
+            if (ImGui::TreeNode(name.c_str()))
+            {
+                // Position edit
+                ImGui::DragFloat3("Position", (float*)&e.position, 0.01F);
+                ImGui::Spacing();
+
+                // Rotation edit
+                ImGui::DragFloat3("Rotation", (float*)&e.rotation, 0.01F);
+                ImGui::Spacing();
+
+                // Scale edit
+                ImGui::DragFloat3("Scale", (float*)&e.scale, 0.01F);
+                ImGui::Spacing();
+
+                ImGui::TreePop();
+            }
+        }
+    }
     if (ImGui::CollapsingHeader("Lights"))
     {
         std::string name;
@@ -1064,7 +1101,7 @@ void RenderQuad(App* app)
 
 void SetCamera(Camera& cam)
 {
-    cam.position = vec3(0.F, 0.F, 6.F);
+    cam.position = vec3(0.F, 0.F, 10.F);
     cam.front = vec3(0.F, 0.F, -1.F);
     cam.up = vec3(0.F, 1.F, 0.F);
     cam.worldUp = cam.up;
