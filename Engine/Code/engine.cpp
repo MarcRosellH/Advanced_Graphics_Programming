@@ -647,6 +647,7 @@ void Gui(App* app)
     }
 
     ImGui::Image((ImTextureID)currentAttachment, size, { 0, 1 }, { 1, 0 });
+    app->isFocused = ImGui::IsWindowFocused();
     ImGui::End(); // End scene
 
     ImGui::PopStyleVar();
@@ -1100,20 +1101,23 @@ void HandleInput(App* app)
         float xOS = app->input.mouseDelta.x * 0.15F; // 0.1F is the sensitivity
         float yOS = app->input.mouseDelta.y * 0.15F;
 
-        app->cam.yaw += xOS;
-        app->cam.pitch += yOS;
+        if (app->isFocused)
+        {
+            app->cam.yaw += xOS;
+            app->cam.pitch += yOS;
 
-        app->cam.pitch = (app->cam.pitch > 89.F) ? 89.F : app->cam.pitch;
-        app->cam.pitch = (app->cam.pitch < -89.F) ? -89.F : app->cam.pitch;
+            app->cam.pitch = (app->cam.pitch > 89.F) ? 89.F : app->cam.pitch;
+            app->cam.pitch = (app->cam.pitch < -89.F) ? -89.F : app->cam.pitch;
 
-        glm::vec3 newFront = vec3(
-            cos(glm::radians(app->cam.yaw)) * cos(glm::radians(app->cam.pitch)),
-            sin(glm::radians(app->cam.pitch)),
-            sin(glm::radians(app->cam.yaw)) * cos(glm::radians(app->cam.pitch)));
+            glm::vec3 newFront = vec3(
+                cos(glm::radians(app->cam.yaw)) * cos(glm::radians(app->cam.pitch)),
+                sin(glm::radians(app->cam.pitch)),
+                sin(glm::radians(app->cam.yaw)) * cos(glm::radians(app->cam.pitch)));
 
-        app->cam.front = glm::normalize(newFront);
-        app->cam.right = glm::normalize(glm::cross(app->cam.front, app->cam.worldUp));
-        app->cam.up = glm::normalize(glm::cross(app->cam.right, app->cam.front));
+            app->cam.front = glm::normalize(newFront);
+            app->cam.right = glm::normalize(glm::cross(app->cam.front, app->cam.worldUp));
+            app->cam.up = glm::normalize(glm::cross(app->cam.right, app->cam.front));
+        }
     }
     SetAspectRatio(app->cam, (float)app->displaySize.x, (float)app->displaySize.y);
 }
