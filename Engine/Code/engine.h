@@ -276,6 +276,7 @@ struct App
     GLuint normalsAttachmentHandle;
     GLuint diffuseAttachmentHandle;
     GLuint depthAttachmentHandle;
+    GLuint cubeMapId;
 
     GLuint fBuffer;
     GLuint finalRenderAttachmentHandle;

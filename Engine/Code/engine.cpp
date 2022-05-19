@@ -501,6 +501,9 @@ void Init(App* app)
     }
     app->currentFBOAttachmentType = FBOAttachmentType::FINAL;
     app->mode = Mode_Deferred;
+
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
 }
 
 void Gui(App* app)
@@ -1313,3 +1316,58 @@ void RenderSphere(App* app)
 
     glBindVertexArray(0);
 }
+
+void CreateCubeMap(App* app)
+{
+    glGenTextures(1, &app->cubeMapId);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
+
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, 
+            app->displaySize.x, app->displaySize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr); //facePixels[i] instead of nullptr
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
+void HDRImage(const char* filename)
+{
+    //load
+    int w = 0;
+    int h = 0;
+    int comp = 0;
+    float* hdrData = nullptr;
+    if (stbi_is_hdr(filename))
+    {
+        stbi_set_flip_vertically_on_load(true);
+        hdrData = stbi_loadf(filename, &w, &h, &comp, 0);
+    }
+
+    //unload
+    if (hdrData != nullptr)
+    {
+        stbi_image_free(hdrData);
+        hdrData = nullptr;
+    }
+}
+
+//void BakeCubemap(App* app)
+//{
+//    /* OpenGLState glState;
+//     glState.faceCulling = false;
+//     glState.apply();
+//     
+//     
+//     */
+//    Program& programTexturedGeometry = app->programs[app->texturedGeometryProgramIdx];
+//    glUseProgram(programTexturedGeometry.handle);
+//
+//    glActiveTexture(GL_TEXTURE0);
+//    glBindTexture(GL_TEXTURE_2D, )
+//    
+//
+//}
