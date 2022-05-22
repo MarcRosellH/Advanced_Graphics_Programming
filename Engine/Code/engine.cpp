@@ -389,6 +389,59 @@ void Init(App* app)
 
     // [Framebuffers]
 
+    // FORWARD BUFFERS
+    // [Framebuffer] Forward Buffer
+    // [Texture] Depth
+    glGenTextures(1, &app->forwardDepthAttachmentHandle);
+    glBindTexture(GL_TEXTURE_2D, app->forwardDepthAttachmentHandle);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, app->displaySize.x, app->displaySize.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // [Texture] Render
+    glGenTextures(1, &app->forwardRenderAttachmentHandle);
+    glBindTexture(GL_TEXTURE_2D, app->forwardRenderAttachmentHandle);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, app->displaySize.x, app->displaySize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glGenFramebuffers(1, &app->forwardFrameBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, app->forwardFrameBuffer);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, app->forwardRenderAttachmentHandle, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, app->forwardDepthAttachmentHandle, 0);
+
+    GLenum drawForwardBuffer[] = { GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers(ARRAY_COUNT(drawForwardBuffer), drawForwardBuffer);
+
+    GLenum forwardFrameBufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (forwardFrameBufferStatus != GL_FRAMEBUFFER_COMPLETE)
+    {
+        switch (forwardFrameBufferStatus)
+        {
+        case GL_FRAMEBUFFER_UNDEFINED:                          ELOG("Framebuffer status error: GL_FRAMEBUFFER_UNDEFINED"); break;
+        case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:              ELOG("Framebuffer status error: GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT"); break;
+        case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:      ELOG("Framebuffer status error: GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT"); break;
+        case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:             ELOG("Framebuffer status error: GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER"); break;
+        case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:             ELOG("Framebuffer status error: GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER"); break;
+        case GL_FRAMEBUFFER_UNSUPPORTED:                        ELOG("Framebuffer status error: GL_FRAMEBUFFER_UNSUPPORTED"); break;
+        case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:             ELOG("Framebuffer status error: GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE"); break;
+        case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:           ELOG("Framebuffer status error: GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS"); break;
+
+        default: ELOG("Unknown framebuffer status error"); break;
+        }
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // DEFERRED BUFFERS
     // [Framebuffer] GBuffer
     // [Texture] Positions
     glGenTextures(1, &app->positionAttachmentHandle);
@@ -603,8 +656,8 @@ void Gui(App* app)
     }
     if (ImGui::CollapsingHeader("Render"))
     {
-        const char* items[] = { "Position", "Normals", "Diffuse", "Depth", "Final" };
-        static const char* curr = items[4];
+        const char* items[] = { "Forward", "Deferred"};
+        static const char* curr = items[1];
         if (ImGui::BeginCombo("##combo", curr))
         {
             for (int n = 0; n < IM_ARRAYSIZE(items); n++)
@@ -618,14 +671,35 @@ void Gui(App* app)
                 }
 
                 if (strcmp(curr, items[0]) == 0)
-                    app->currentFBOAttachmentType = FBOAttachmentType::POSITION;
+                    app->mode = Mode::Mode_TexturedMesh;
                 if (strcmp(curr, items[1]) == 0)
+                    app->mode = Mode::Mode_Deferred;
+            }
+            ImGui::EndCombo();
+        }
+        const char* items2[] = { "Position", "Normals", "Diffuse", "Depth", "Final" };
+        static const char* curr2 = items2[4];
+        if (curr == "Deferred" && ImGui::BeginCombo("##combo2", curr2))
+        {
+            for (int n = 0; n < IM_ARRAYSIZE(items2); n++)
+            {
+                bool is_selected = (curr2 == items2[n]);
+                if (ImGui::Selectable(items2[n], is_selected))
+                    curr2 = items2[n];
+                if (is_selected)
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
+
+                if (strcmp(curr2, items2[0]) == 0)
+                    app->currentFBOAttachmentType = FBOAttachmentType::POSITION;
+                if (strcmp(curr2, items2[1]) == 0)
                     app->currentFBOAttachmentType = FBOAttachmentType::NORMALS;
-                if (strcmp(curr, items[2]) == 0)
+                if (strcmp(curr2, items2[2]) == 0)
                     app->currentFBOAttachmentType = FBOAttachmentType::DIFFUSE;
-                if (strcmp(curr, items[3]) == 0)
+                if (strcmp(curr2, items2[3]) == 0)
                     app->currentFBOAttachmentType = FBOAttachmentType::DEPTH;
-                if (strcmp(curr, items[4]) == 0)
+                if (strcmp(curr2, items2[4]) == 0)
                     app->currentFBOAttachmentType = FBOAttachmentType::FINAL;
             }
             ImGui::EndCombo();
@@ -651,38 +725,48 @@ void Gui(App* app)
     ImGui::Begin("Scene");
     ImVec2 size = ImGui::GetContentRegionAvail();
     GLuint currentAttachment = 0;
-    switch (app->currentFBOAttachmentType)
+    switch (app->mode)
     {
-    case FBOAttachmentType::POSITION:
-    {
-        currentAttachment = app->positionAttachmentHandle;
-    }
-    break;
+    case Mode::Mode_TexturedMesh:
+        currentAttachment = app->forwardRenderAttachmentHandle;
+        break;
+    case Mode::Mode_Deferred:
+        switch (app->currentFBOAttachmentType)
+        {
+        case FBOAttachmentType::POSITION:
+        {
+            currentAttachment = app->positionAttachmentHandle;
+        }
+        break;
 
-    case FBOAttachmentType::NORMALS:
-    {
-        currentAttachment = app->normalsAttachmentHandle;
-    }
-    break;
+        case FBOAttachmentType::NORMALS:
+        {
+            currentAttachment = app->normalsAttachmentHandle;
+        }
+        break;
 
-    case FBOAttachmentType::DIFFUSE:
-    {
-        currentAttachment = app->diffuseAttachmentHandle;
-    }
-    break;
+        case FBOAttachmentType::DIFFUSE:
+        {
+            currentAttachment = app->diffuseAttachmentHandle;
+        }
+        break;
 
-    case FBOAttachmentType::DEPTH:
-    {
-        currentAttachment = app->depthAttachmentHandle;
-    }
-    break;
+        case FBOAttachmentType::DEPTH:
+        {
+            currentAttachment = app->depthAttachmentHandle;
+        }
+        break;
 
-    case FBOAttachmentType::FINAL:
-    {
-        currentAttachment = app->finalRenderAttachmentHandle;
-    }
-    break;
+        case FBOAttachmentType::FINAL:
+        {
+            currentAttachment = app->finalRenderAttachmentHandle;
+        }
+        break;
 
+        default:
+        {} break;
+        }
+        break;
     default:
     {} break;
     }
@@ -802,12 +886,17 @@ void Render(App* app)
             break;
         case Mode_TexturedMesh:
             {
+            glBindFramebuffer(GL_FRAMEBUFFER, app->forwardFrameBuffer);
+
                 glClearColor(0.1F, 0.1F, 0.1F, 1.0F);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
                 glEnable(GL_DEPTH_TEST);
+
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
                 Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
                 glUseProgram(texturedMeshProgram.handle);
@@ -838,6 +927,9 @@ void Render(App* app)
                         glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
                     }
                 }
+                RenderQuad(app);
+                glUseProgram(0);
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
             }
             break;
         case Mode_Deferred:

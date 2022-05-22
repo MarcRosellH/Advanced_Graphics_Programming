@@ -270,7 +270,8 @@ struct App
     GLint debugLight_uModel;
     GLint debugLight_uLightColor;
 
-    // Framebuffer
+    // Framebuffers ---------------------
+    // Deferred
     GLuint gBuffer;
     GLuint positionAttachmentHandle;
     GLuint normalsAttachmentHandle;
@@ -280,6 +281,14 @@ struct App
 
     GLuint fBuffer;
     GLuint finalRenderAttachmentHandle;
+
+    // Forward
+    GLuint forwardRenderAttachmentHandle;
+    GLuint forwardDepthAttachmentHandle;
+
+    GLuint forwardFrameBuffer;
+
+    // ---------------------------------
 
     FBOAttachmentType currentFBOAttachmentType;
 

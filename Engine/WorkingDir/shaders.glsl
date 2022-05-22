@@ -151,6 +151,7 @@ void main()
 	}
 
 	oColor = vec4(lightFactor, 1.0) * objectColor;
+	gl_FragDepth = gl_FragCoord.z - 0.2;
 }
 
 #endif
