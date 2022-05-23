@@ -110,7 +110,8 @@ layout(location = 0) out vec4 oColor;
 
 vec3 DirectionalLight(Light light)
 {
-	return vec3(1.0);
+	float brightness = dot(normalize(light.direction), vNormal);
+	return light.color * vec3(brightness);
 }
 
 vec3 PointLight(Light light)
