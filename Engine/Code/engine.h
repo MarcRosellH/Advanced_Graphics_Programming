@@ -260,6 +260,7 @@ struct App
     GLint texturedMeshProgram_uTexture;
 
     GLint deferredGeometryProgram_uTexture;
+    GLint deferredGeometryProgram_uColor;
 
     GLint deferredLightingProgram_uGPosition;
     GLint deferredLightingProgram_uGNormals;

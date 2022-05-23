@@ -193,6 +193,7 @@ in vec3 vPosition;
 in vec3 vNormal;
 
 uniform sampler2D uTexture;
+uniform vec3 uColor;
 
 layout(location = 0) out vec4 oPosition;
 layout(location = 1) out vec4 oNormals;
@@ -206,7 +207,7 @@ void main()
 
 	oPosition = vec4(vPosition, 1.0);
 	oNormals = vec4(normalize(vNormal), 1.0);
-	oColor = vec4(c, 1.0);
+	oColor = vec4(uColor, 1.0);
 
 	gl_FragDepth = gl_FragCoord.z - 0.2;
 }

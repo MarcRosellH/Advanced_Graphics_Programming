@@ -249,27 +249,28 @@ void Init(App* app)
 
     // Load models
     app->patrickModelIdx = LoadModel(app, "Patrick/Patrick.obj");
-    //app->roomModelIdx = LoadModel(app, "Room/Room #1.obj");
+    app->roomModelIdx = LoadModel(app, "Lake/Lake.obj");
 
     // Entities initalization
-    app->entities.push_back(Entity{ vec3(6,0,0), vec3(90,0,0), vec3(1,1,1), app->patrickModelIdx });
+    /*app->entities.push_back(Entity{vec3(6,0,0), vec3(90,0,0), vec3(1,1,1), app->patrickModelIdx});
     app->entities.push_back(Entity{ vec3(-6,0,0), vec3(0,0,90), vec3(1,1,1), app->patrickModelIdx });
     app->entities.push_back(Entity{ vec3(0,0,0), vec3(0,0,0), vec3(1,1,1), app->patrickModelIdx });
     app->entities.push_back(Entity{ vec3(6,0,-6), vec3(45,0,90), vec3(1,1,1), app->patrickModelIdx });
     app->entities.push_back(Entity{ vec3(0,0,-6), vec3(0,90,0), vec3(1,1,1), app->patrickModelIdx });
     app->entities.push_back(Entity{ vec3(-6,0,-6), vec3(45,45,45), vec3(1,1,1), app->patrickModelIdx });
-    app->entities.push_back(Entity{ vec3(0,0,-50), vec3(0,0,0), vec3(10,10,10), app->patrickModelIdx });
+    app->entities.push_back(Entity{ vec3(0,0,-50), vec3(0,0,0), vec3(10,10,10), app->patrickModelIdx });*/
+    app->entities.push_back(Entity{ vec3(0,0,0), vec3(0,0,0), vec3(1,1,1), app->roomModelIdx });
 
     // Lights initialization
     app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(1,1,1), vec3(0,0,0), vec3(1,-1,1), 100.0F, 10.0F });
-    app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(0,0,1), vec3(0,0,0), vec3(0,0,1), 100.0F, 100.0F });
-    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,1,1), vec3(0,1,1), vec3(0,0,0), 5.0F, 1.0F });
-    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,1,0), vec3(6,1,1), vec3(0,0,0), 5.0F, 1.0F });
-    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,0,1), vec3(-6,1,1), vec3(0,0,0), 5.0F, 1.0F });
-    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,0,0), vec3(-6,1,-5), vec3(0,0,0), 5.0F, 1.0F });
-    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(0,1,1), vec3(0,0,-5), vec3(0,0,0), 5.0F, 1.0F });
-    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(0,1,0), vec3(6,0,-5), vec3(0,0,0), 5.0F, 1.0F });
-    app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,0,0), vec3(0,0,-42), vec3(0,0,0), 30.0F, 1.0F });
+    //app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(0,0,1), vec3(0,0,0), vec3(0,0,1), 100.0F, 100.0F });
+    //app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,1,1), vec3(0,1,1), vec3(0,0,0), 5.0F, 1.0F });
+    //app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,1,0), vec3(6,1,1), vec3(0,0,0), 5.0F, 1.0F });
+    //app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,0,1), vec3(-6,1,1), vec3(0,0,0), 5.0F, 1.0F });
+    //app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,0,0), vec3(-6,1,-5), vec3(0,0,0), 5.0F, 1.0F });
+    //app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(0,1,1), vec3(0,0,-5), vec3(0,0,0), 5.0F, 1.0F });
+    //app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(0,1,0), vec3(6,0,-5), vec3(0,0,0), 5.0F, 1.0F });
+    //app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,0,0), vec3(0,0,-42), vec3(0,0,0), 30.0F, 1.0F });
     
     // Camera initialization
     SetCamera(app->cam);
@@ -356,6 +357,7 @@ void Init(App* app)
     }
 
     app->deferredGeometryProgram_uTexture = glGetUniformLocation(deferredGeoPassProgram.handle, "uTexture");
+    app->deferredGeometryProgram_uColor = glGetUniformLocation(deferredGeoPassProgram.handle, "uColor");
 
     // [Deferred Render] Lighting Pass Program
     app->deferredLightingPassProgramIdx = LoadProgram(app, "shaders.glsl", "DEFERRED_LIGHTING_PASS");
@@ -973,8 +975,9 @@ void Render(App* app)
                     Material& submesh_material = app->materials[submesh_material_index];
 
                     glActiveTexture(GL_TEXTURE0);
-                    glBindTexture(GL_TEXTURE_2D, app->textures[submesh_material.albedoTextureIdx].handle);
+                    glBindTexture(GL_TEXTURE_2D, app->textures[submesh_material.albedoTextureIdx < UINT32_MAX || submesh_material.albedoTextureIdx != 0 ? submesh_material.albedoTextureIdx : app->whiteTexIdx].handle);
                     glUniform1i(app->deferredGeometryProgram_uTexture, 0);
+                    glUniform3f(app->deferredGeometryProgram_uColor, submesh_material.albedo.r, submesh_material.albedo.g, submesh_material.albedo.b);
 
                     Submesh& submesh = mesh.submeshes[i];
                     glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
