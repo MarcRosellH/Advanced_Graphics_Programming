@@ -180,6 +180,12 @@ u32 LoadTexture2D(App* app, const char* filepath)
     }
 }
 
+Image LoadSkyboxPixels(App* app, const char* filepath)
+{
+    Image image = LoadImage(filepath);
+
+    return image;
+}
 void Init(App* app)
 {
 
@@ -241,6 +247,16 @@ void Init(App* app)
     app->normalTexIdx = LoadTexture2D(app, "color_normal.png");
     app->magentaTexIdx = LoadTexture2D(app, "color_magenta.png");
 
+    Image pixels[6];
+    pixels[0] = LoadSkyboxPixels(app, "Skybox/skyboxX+.png");
+    pixels[1] = LoadSkyboxPixels(app, "Skybox/skyboxX-.png");
+    pixels[2] = LoadSkyboxPixels(app, "Skybox/skyboxY+.png");
+    pixels[3] = LoadSkyboxPixels(app, "Skybox/skyboxY-.png");
+    pixels[4] = LoadSkyboxPixels(app, "Skybox/skyboxZ+.png");
+    pixels[5] = LoadSkyboxPixels(app, "Skybox/skyboxZ-.png");
+    CreateCubeMap(app, pixels);
+
+
     // Create uniform buffers
     glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &app->maxUniformBufferSize);
     glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &app->uniformBlockAlignment);
@@ -277,6 +293,8 @@ void Init(App* app)
     LoadSphere(app);
 
     app->deferredLightProgramIdx = LoadProgram(app, "shaders.glsl", "LIGHT_DEBUG");
+    app->skyBox = LoadProgram(app, "Skybox.glsl", "SKYBOX");
+
     Program& deferredLightProgram = app->programs[app->deferredLightProgramIdx];
 
     GLint defLightProgramAttrCount;
@@ -556,6 +574,8 @@ void Init(App* app)
     app->mode = Mode_Deferred;
 
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+
 
 }
 
@@ -852,6 +872,7 @@ void Update(App* app)
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
+
 void Render(App* app)
 {
 
@@ -982,8 +1003,16 @@ void Render(App* app)
                     glBindVertexArray(0);
                 }
             }
+           // glUseProgram(0);
+
+            glDepthMask(GL_FALSE);
+
+            Program& skyBoxProgram = app->programs[app->deferredGeometryPassProgramIdx];
+            glUseProgram(app->skyBox);
+            RenderSkybox(app);
 
             glUseProgram(0);
+            glDepthMask(GL_TRUE);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -1409,15 +1438,90 @@ void RenderSphere(App* app)
     glBindVertexArray(0);
 }
 
-void CreateCubeMap(App* app)
+void RenderSkybox(App* app)
+{
+    if (app->SKyboxVAO == 0)
+    {
+        float vertices[] = {
+            // front
+        -1.0, -1.0,  1.0,
+         1.0, -1.0,  1.0,
+         1.0,  1.0,  1.0,
+        -1.0,  1.0,  1.0,
+        // back
+        -1.0, -1.0, -1.0,
+         1.0, -1.0, -1.0,
+         1.0,  1.0, -1.0,
+        -1.0,  1.0, -1.0
+        };
+
+        unsigned int indices01[] = {
+            // front
+                   0, 1, 2,
+                   2, 3, 0,
+                   // right
+                   1, 5, 6,
+                   6, 2, 1,
+                   // back
+                   7, 6, 5,
+                   5, 4, 7,
+                   // left
+                   4, 0, 3,
+                   3, 7, 4,
+                   // bottom
+                   4, 5, 1,
+                   1, 0, 4,
+                   // top
+                   3, 2, 6,
+                   6, 7, 3
+        };
+
+        glGenVertexArrays(1, &app->SKyboxVAO);
+        glBindVertexArray(app->SKyboxVAO);
+
+        glGenBuffers(1, &app->SKyboxIBO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, app->SKyboxIBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices01[0]) * 36, indices01, GL_STATIC_DRAW);
+
+        glGenBuffers(1, &app->SkyboxVBO);
+        glBindBuffer(GL_ARRAY_BUFFER, app->SkyboxVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * 8 * 3, vertices, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(0);
+
+        //Unbinding
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+
+ 
+
+        
+    }
+    glBindVertexArray(app->SKyboxVAO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, app->SKyboxIBO);
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
+
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    
+
+
+}
+
+void CreateCubeMap(App* app, Image pixels[6])
 {
     glGenTextures(1, &app->cubeMapId);
     glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
 
     for (unsigned int i = 0; i < 6; ++i)
     {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, 
-            app->displaySize.x, app->displaySize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr); //facePixels[i] instead of nullptr
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB,
+            app->displaySize.x, app->displaySize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels[i]);
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -1426,26 +1530,27 @@ void CreateCubeMap(App* app)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
-void HDRImage(const char* filename)
-{
-    //load
-    int w = 0;
-    int h = 0;
-    int comp = 0;
-    float* hdrData = nullptr;
-    if (stbi_is_hdr(filename))
-    {
-        stbi_set_flip_vertically_on_load(true);
-        hdrData = stbi_loadf(filename, &w, &h, &comp, 0);
-    }
 
-    //unload
-    if (hdrData != nullptr)
-    {
-        stbi_image_free(hdrData);
-        hdrData = nullptr;
-    }
-}
+//void HDRImage(const char* filename)
+//{
+//    //load
+//    int w = 0;
+//    int h = 0;
+//    int comp = 0;
+//    float* hdrData = nullptr;
+//    if (stbi_is_hdr(filename))
+//    {
+//        stbi_set_flip_vertically_on_load(true);
+//        hdrData = stbi_loadf(filename, &w, &h, &comp, 0);
+//    }
+//
+//    //unload
+//    if (hdrData != nullptr)
+//    {
+//        stbi_image_free(hdrData);
+//        hdrData = nullptr;
+//    }
+//}
 
 //void BakeCubemap(App* app)
 //{
