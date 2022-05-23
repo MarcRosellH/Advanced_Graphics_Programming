@@ -351,7 +351,7 @@ glm::mat4 MatrixFromPositionRotationScale(const vec3& position, const vec3& rota
 
 void RenderQuad(App* app);
 
-void CreateCubeMap(App* app);
+void CreateCubeMap(App* app, Image image[6]);
 void RenderSkybox(App* app);
 void SetCamera(Camera& cam);
 

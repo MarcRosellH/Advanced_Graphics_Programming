@@ -1003,7 +1003,7 @@ void Render(App* app)
                     glBindVertexArray(0);
                 }
             }
-           // glUseProgram(0);
+            glUseProgram(0);
 
             glDepthMask(GL_FALSE);
 
@@ -1521,7 +1521,10 @@ void CreateCubeMap(App* app, Image pixels[6])
     for (unsigned int i = 0; i < 6; ++i)
     {
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB,
-            app->displaySize.x, app->displaySize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels[i]);
+            app->displaySize.x, app->displaySize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, &pixels[i]);
+
+        FreeImage(pixels[i]);
+
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
