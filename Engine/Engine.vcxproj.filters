@@ -106,7 +106,7 @@
     <None Include="WorkingDir\shaders.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Skybox.glsl">
+    <None Include="WorkingDir\Skybox.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

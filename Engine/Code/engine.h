@@ -129,7 +129,7 @@ struct Camera
     float   pitch;
     float   fov = 60.F;
     float   nearPlane = 0.1F;
-    float   farPlane = 1000.0F;
+    float   farPlane = 10000.0F;
     float   aspectRatio;
 
     float   speed;

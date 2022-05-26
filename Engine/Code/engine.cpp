@@ -186,6 +186,39 @@ Image LoadSkyboxPixels(App* app, const char* filepath)
 
     return image;
 }
+
+unsigned int loadCubemap(std::vector<std::string> faces)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+            );
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+}
+
 void Init(App* app)
 {
 
@@ -247,16 +280,41 @@ void Init(App* app)
     app->normalTexIdx = LoadTexture2D(app, "color_normal.png");
     app->magentaTexIdx = LoadTexture2D(app, "color_magenta.png");
 
-    Image pixels[6];
-    pixels[0] = LoadSkyboxPixels(app, "Skybox/skyboxX+.png");
-    pixels[1] = LoadSkyboxPixels(app, "Skybox/skyboxX-.png");
-    pixels[2] = LoadSkyboxPixels(app, "Skybox/skyboxY+.png");
-    pixels[3] = LoadSkyboxPixels(app, "Skybox/skyboxY-.png");
-    pixels[4] = LoadSkyboxPixels(app, "Skybox/skyboxZ+.png");
-    pixels[5] = LoadSkyboxPixels(app, "Skybox/skyboxZ-.png");
-    CreateCubeMap(app, pixels);
+    //Image pixels[6];
+    //pixels[0] = LoadSkyboxPixels(app, "Skybox/skyboxX+.png");
+    //pixels[1] = LoadSkyboxPixels(app, "Skybox/skyboxX-.png");
+    //pixels[2] = LoadSkyboxPixels(app, "Skybox/skyboxY+.png");
+    //pixels[3] = LoadSkyboxPixels(app, "Skybox/skyboxY-.png");
+    //pixels[4] = LoadSkyboxPixels(app, "Skybox/skyboxZ+.png");
+    //pixels[5] = LoadSkyboxPixels(app, "Skybox/skyboxZ-.png");
+   
+    //glGenTextures(1, &app->cubeMapId);
+    //glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
 
+    //for (unsigned int i = 0; i < 6; ++i)
+    //{
+    //    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB,
+    //        pixels[i].size.x, pixels[i].size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels[i].pixels);
 
+    //    //FreeImage(pixels[i]);
+
+    //}
+    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   // CreateCubeMap(app, pixels);
+    std::vector<std::string> faces = 
+    {
+        "right.jpg",
+        "left.jpg",
+        "top.jpg",
+        "bottom.jpg",
+        "front.jpg",
+        "back.jpg"
+    };
+    app->cubeMapId = loadCubemap(faces);
     // Create uniform buffers
     glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &app->maxUniformBufferSize);
     glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &app->uniformBlockAlignment);
@@ -1007,8 +1065,8 @@ void Render(App* app)
 
             glDepthMask(GL_FALSE);
 
-            Program& skyBoxProgram = app->programs[app->deferredGeometryPassProgramIdx];
-            glUseProgram(app->skyBox);
+            Program& skyBoxProgram = app->programs[app->skyBox];
+            glUseProgram(skyBoxProgram.handle);
             RenderSkybox(app);
 
             glUseProgram(0);
@@ -1442,73 +1500,82 @@ void RenderSkybox(App* app)
 {
     if (app->SKyboxVAO == 0)
     {
-        float vertices[] = {
-            // front
-        -1.0, -1.0,  1.0,
-         1.0, -1.0,  1.0,
-         1.0,  1.0,  1.0,
-        -1.0,  1.0,  1.0,
-        // back
-        -1.0, -1.0, -1.0,
-         1.0, -1.0, -1.0,
-         1.0,  1.0, -1.0,
-        -1.0,  1.0, -1.0
+        float skyboxVertices[] = {
+            // positions          
+            -10.0f,  10.0f, -10.0f,
+            -10.0f, -10.0f, -10.0f,
+             10.0f, -10.0f, -10.0f,
+             10.0f, -10.0f, -10.0f,
+             10.0f,  10.0f, -10.0f,
+            -10.0f,  10.0f, -10.0f,
+                              
+            -10.0f, -10.0f,  10.0f,
+            -10.0f, -10.0f, -10.0f,
+            -10.0f,  10.0f, -10.0f,
+            -10.0f,  10.0f, -10.0f,
+            -10.0f,  10.0f,  10.0f,
+            -10.0f, -10.0f,  10.0f,
+                              
+             10.0f, -10.0f, -10.0f,
+             10.0f, -10.0f,  10.0f,
+             10.0f,  10.0f,  10.0f,
+             10.0f,  10.0f,  10.0f,
+             10.0f,  10.0f, -10.0f,
+             10.0f, -10.0f, -10.0f,
+                              
+            -10.0f, -10.0f,  10.0f,
+            -10.0f,  10.0f,  10.0f,
+             10.0f,  10.0f,  10.0f,
+             10.0f,  10.0f,  10.0f,
+             10.0f, -10.0f,  10.0f,
+            -10.0f, -10.0f,  10.0f,
+                              
+            -10.0f,  10.0f, -10.0f,
+             10.0f,  10.0f, -10.0f,
+             10.0f,  10.0f,  10.0f,
+             10.0f,  10.0f,  10.0f,
+            -10.0f,  10.0f,  10.0f,
+            -10.0f,  10.0f, -10.0f,
+                              
+            -10.0f, -10.0f, -10.0f,
+            -10.0f, -10.0f,  10.0f,
+             10.0f, -10.0f, -10.0f,
+             10.0f, -10.0f, -10.0f,
+            -10.0f, -10.0f,  10.0f,
+             10.0f, -10.0f,  10.0f
         };
 
-        unsigned int indices01[] = {
-            // front
-                   0, 1, 2,
-                   2, 3, 0,
-                   // right
-                   1, 5, 6,
-                   6, 2, 1,
-                   // back
-                   7, 6, 5,
-                   5, 4, 7,
-                   // left
-                   4, 0, 3,
-                   3, 7, 4,
-                   // bottom
-                   4, 5, 1,
-                   1, 0, 4,
-                   // top
-                   3, 2, 6,
-                   6, 7, 3
-        };
-
+                // skybox VAO
         glGenVertexArrays(1, &app->SKyboxVAO);
-        glBindVertexArray(app->SKyboxVAO);
-
-        glGenBuffers(1, &app->SKyboxIBO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, app->SKyboxIBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices01[0]) * 36, indices01, GL_STATIC_DRAW);
-
         glGenBuffers(1, &app->SkyboxVBO);
+        glBindVertexArray(app->SKyboxVAO);
         glBindBuffer(GL_ARRAY_BUFFER, app->SkyboxVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * 8 * 3, vertices, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
         glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
         //Unbinding
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
  
 
         
     }
+    glDepthFunc(GL_LEQUAL);
     glBindVertexArray(app->SKyboxVAO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, app->SKyboxIBO);
-
     glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
+    
+    Program& skyBoxProgram = app->programs[app->skyBox];
+    i32 projLoc = glGetUniformLocation(skyBoxProgram.handle, "projection");
+    i32 viewLoc = glGetUniformLocation(skyBoxProgram.handle, "view");
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, &app->projectionMat[0][0]);
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &app->viewMat[0][0]);
 
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    
+    glDepthFunc(GL_LESS);
 
 
 }
@@ -1521,7 +1588,7 @@ void CreateCubeMap(App* app, Image pixels[6])
     for (unsigned int i = 0; i < 6; ++i)
     {
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB,
-            app->displaySize.x, app->displaySize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, &pixels[i]);
+            app->displaySize.x, app->displaySize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels[i].pixels);
 
         FreeImage(pixels[i]);
 
