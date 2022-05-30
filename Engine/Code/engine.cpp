@@ -249,7 +249,7 @@ void Init(App* app)
 
     // Load models
     app->patrickModelIdx = LoadModel(app, "Patrick/Patrick.obj");
-    app->roomModelIdx = LoadModel(app, "Lake/Lake.obj");
+    app->roomModelIdx = LoadModel(app, "Lake/Erlaufsee.obj");
 
     // Entities initalization
     /*app->entities.push_back(Entity{vec3(6,0,0), vec3(90,0,0), vec3(1,1,1), app->patrickModelIdx});
@@ -1199,7 +1199,7 @@ void RenderQuad(App* app)
 
 void SetCamera(Camera& cam)
 {
-    cam.position = vec3(0.F, 0.F, 10.F);
+    cam.position = vec3(0.F, 10.F, 10.F);
     cam.front = vec3(0.F, 0.F, -1.F);
     cam.up = vec3(0.F, 1.F, 0.F);
     cam.worldUp = cam.up;
