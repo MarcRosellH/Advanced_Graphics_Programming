@@ -351,33 +351,7 @@ void Init(App* app)
 
     LoadSphere(app);
 
-    app->deferredLightProgramIdx = LoadProgram(app, "shaders.glsl", "LIGHT_DEBUG");
     app->skyBox = LoadProgram(app, "Skybox.glsl", "SKYBOX");
-
-    Program& deferredLightProgram = app->programs[app->deferredLightProgramIdx];
-
-    GLint defLightProgramAttrCount;
-    glGetProgramiv(deferredLightProgram.handle, GL_ACTIVE_ATTRIBUTES, &defLightProgramAttrCount);
-
-    for (int i = 0; i < defLightProgramAttrCount; ++i)
-    {
-        GLchar attribute_name[32];
-        GLsizei attribute_length;
-        GLint attribute_size;
-        GLenum attribute_type;
-
-        glGetActiveAttrib(deferredLightProgram.handle, i, ARRAY_COUNT(attribute_name), &attribute_length, &attribute_size, &attribute_type, attribute_name);
-        GLint attribute_location = glGetAttribLocation(deferredLightProgram.handle, attribute_name);
-
-        ELOG("Attribute %s. Location: %d Type: %d", attribute_name, attribute_location, attribute_type);
-
-        deferredLightProgram.vertexInputLayout.attributes.push_back({ (u8)attribute_location, GetAttribComponentCount(attribute_type) });
-    }
-
-    app->debugLight_uProjection = glGetUniformLocation(deferredLightProgram.handle, "uProjection");
-    app->debugLight_uView = glGetUniformLocation(deferredLightProgram.handle, "uView");
-    app->debugLight_uModel = glGetUniformLocation(deferredLightProgram.handle, "uModel");
-    app->debugLight_uLightColor = glGetUniformLocation(deferredLightProgram.handle, "uLightColor");
 
     // Shader loading and attribute management 
     // [Forward Render]
@@ -1121,34 +1095,6 @@ void Render(App* app)
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, app->fBuffer);
 
             glBlitFramebuffer(0, 0, app->displaySize.x, app->displaySize.x, 0, 0, app->displaySize.x, app->displaySize.x, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-
-            glUseProgram(0);
-
-            // Render debug lights
-            Program& deferredLightProgram = app->programs[app->deferredLightProgramIdx];
-            glUseProgram(deferredLightProgram.handle);
-
-            glUniformMatrix4fv(app->debugLight_uProjection, 1, GL_FALSE, &app->projectionMat[0][0]);
-            glUniformMatrix4fv(app->debugLight_uView, 1, GL_FALSE, &app->viewMat[0][0]);
-
-            for (unsigned int i = 0; i < app->lights.size(); ++i)
-            {
-                Light& light = app->lights[i];
-                glm::mat4 model = glm::mat4(1.0f);
-                model = glm::translate(model, light.position);
-                model = glm::scale(model, glm::vec3(2.0f));
-
-                glUniformMatrix4fv(app->debugLight_uModel, 1, GL_FALSE, &model[0][0]);
-                glUniform3f(app->debugLight_uLightColor, light.color.r, light.color.g, light.color.b);
-
-                switch (light.type)
-                {
-                case LightType::LIGHTTYPE_POINT: RenderSphere(app); break;
-                case LightType::LIGHTTYPE_DIRECTIONAL: RenderQuad(app); break;
-
-                default: break;
-                }
-            }
 
             glUseProgram(0);
 

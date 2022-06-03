@@ -270,11 +270,6 @@ struct App
     GLint deferredLightingProgram_uGNormals;
     GLint deferredLightingProgram_uGDiffuse;
 
-    GLint debugLight_uProjection;
-    GLint debugLight_uView;
-    GLint debugLight_uModel;
-    GLint debugLight_uLightColor;
-
     // Framebuffers ---------------------
     // Deferred
     GLuint gBuffer;
