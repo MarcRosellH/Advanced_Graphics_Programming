@@ -129,7 +129,7 @@ struct Camera
     float   pitch;
     float   fov = 60.F;
     float   nearPlane = 0.1F;
-    float   farPlane = 1000.0F;
+    float   farPlane = 10000.0F;
     float   aspectRatio;
 
     float   speed;
@@ -232,13 +232,16 @@ struct App
     u32 deferredGeometryPassProgramIdx;
     u32 deferredLightingPassProgramIdx;
     u32 deferredLightProgramIdx;
-    
+    //skybox program
+    u32 skyBox;
+
     // Texture indices
     u32 diceTexIdx;
     u32 whiteTexIdx;
     u32 blackTexIdx;
     u32 normalTexIdx;
     u32 magentaTexIdx;
+    u32 skyBoxtext[6];
 
     // Entities
     std::vector<Entity>     entities;
@@ -315,6 +318,11 @@ struct App
     GLuint quadVAO = 0u;
     GLuint quadVBO;
 
+    GLuint SKyboxVAO = 0u;
+    GLuint SKyboxIBO = 0u;
+
+    GLuint SkyboxVBO;
+
     GLuint sphereVAO = 0u;
     GLuint sphereIdxCount;
 
@@ -343,6 +351,8 @@ glm::mat4 MatrixFromPositionRotationScale(const vec3& position, const vec3& rota
 
 void RenderQuad(App* app);
 
+void CreateCubeMap(App* app, Image image[6]);
+void RenderSkybox(App* app);
 void SetCamera(Camera& cam);
 
 void SetAspectRatio(Camera& cam, float dsX, float dsY);
