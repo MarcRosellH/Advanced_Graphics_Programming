@@ -196,6 +196,8 @@ in vec3 vNormal;
 
 uniform sampler2D uTexture;
 uniform vec3 uColor;
+uniform vec3 cameraPos;
+uniform samplerCube skybox;
 
 layout(location = 0) out vec4 oPosition;
 layout(location = 1) out vec4 oNormals;
@@ -206,10 +208,16 @@ out float gl_FragDepth;
 void main()
 {
 	vec3 c = texture(uTexture, vTexCoord).rgb;
-
+	
 	oPosition = vec4(vPosition, 1.0);
 	oNormals = vec4(normalize(vNormal), 1.0);
 	oColor = vec4(c*uColor, 1.0);
+
+	vec3 I = normalize(vPosition - cameraPos);
+    vec3 R = reflect(I, normalize(vNormal));
+	vec4 ReflectionColor = vec4(texture(skybox, R).rgb, 1.0);
+    oColor = mix(vec4(uColor, 1.0), ReflectionColor, 0.5);
+	oColor = vec4(c * oColor.rgb, 1.0);
 
 	gl_FragDepth = gl_FragCoord.z - 0.2;
 }
@@ -272,11 +280,11 @@ layout(binding = 0, std140) uniform GlobalParams
 	Light uLight[16];
 };
 
+layout(location = 0) out vec4 oFinalRender;
+
 uniform sampler2D uGPosition;
 uniform sampler2D uGNormals;
 uniform sampler2D uGDiffuse;
-
-layout(location = 0) out vec4 oFinalRender;
 
 vec3 DirectionalLight(Light light, vec3 Normal, vec3 Diffuse)
 {
@@ -353,6 +361,7 @@ void main()
     }
 
 	oFinalRender = vec4(lighting * Diffuse, 1.0);
+
 }
 
 #ifdef LIGHT_DEBUG

@@ -326,13 +326,13 @@ void Init(App* app)
     app->roomModelIdx = LoadModel(app, "Lake/Erlaufsee.obj");
 
     // Entities initalization
-    /*app->entities.push_back(Entity{vec3(6,0,0), vec3(90,0,0), vec3(1,1,1), app->patrickModelIdx});
-    app->entities.push_back(Entity{ vec3(-6,0,0), vec3(0,0,90), vec3(1,1,1), app->patrickModelIdx });
-    app->entities.push_back(Entity{ vec3(0,0,0), vec3(0,0,0), vec3(1,1,1), app->patrickModelIdx });
-    app->entities.push_back(Entity{ vec3(6,0,-6), vec3(45,0,90), vec3(1,1,1), app->patrickModelIdx });
-    app->entities.push_back(Entity{ vec3(0,0,-6), vec3(0,90,0), vec3(1,1,1), app->patrickModelIdx });
-    app->entities.push_back(Entity{ vec3(-6,0,-6), vec3(45,45,45), vec3(1,1,1), app->patrickModelIdx });
-    app->entities.push_back(Entity{ vec3(0,0,-50), vec3(0,0,0), vec3(10,10,10), app->patrickModelIdx });*/
+    //app->entities.push_back(Entity{vec3(6,0,0), vec3(90,0,0), vec3(1,1,1), app->patrickModelIdx});
+    //app->entities.push_back(Entity{ vec3(-6,0,0), vec3(0,0,90), vec3(1,1,1), app->patrickModelIdx });
+    //app->entities.push_back(Entity{ vec3(0,0,0), vec3(0,0,0), vec3(1,1,1), app->patrickModelIdx });
+    //app->entities.push_back(Entity{ vec3(6,0,-6), vec3(45,0,90), vec3(1,1,1), app->patrickModelIdx });
+    //app->entities.push_back(Entity{ vec3(0,0,-6), vec3(0,90,0), vec3(1,1,1), app->patrickModelIdx });
+    //app->entities.push_back(Entity{ vec3(-6,0,-6), vec3(45,45,45), vec3(1,1,1), app->patrickModelIdx });
+    //app->entities.push_back(Entity{ vec3(0,0,-50), vec3(0,0,0), vec3(10,10,10), app->patrickModelIdx });
     app->entities.push_back(Entity{ vec3(0,0,0), vec3(0,0,0), vec3(1,1,1), app->roomModelIdx });
 
     // Lights initialization
@@ -1040,7 +1040,7 @@ void Render(App* app)
 
             Program& deferredGeometryPassProgram = app->programs[app->deferredGeometryPassProgramIdx];
             glUseProgram(deferredGeometryPassProgram.handle);
-
+            GLuint cp = glGetUniformLocation(deferredGeometryPassProgram.handle, "cameraPos");
             for (const Entity& entity : app->entities)
             {
                 Model& model = app->models[entity.modelIdx];
@@ -1060,8 +1060,10 @@ void Render(App* app)
                     glActiveTexture(GL_TEXTURE0);
 
                     glBindTexture(GL_TEXTURE_2D, app->textures[(hasTex) ? submesh_material.albedoTextureIdx : app->whiteTexIdx].handle);
+                   // glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
                     glUniform1i(app->deferredGeometryProgram_uTexture, 0);
                     glUniform3f(app->deferredGeometryProgram_uColor, (hasTex) ? 1.0F : submesh_material.albedo.r, (hasTex) ? 1.0F : submesh_material.albedo.g, (hasTex) ? 1.0F : submesh_material.albedo.b);
+                    glUniform3f(cp, app->cam.position.x, app->cam.position.y, app->cam.position.z);
 
                     Submesh& submesh = mesh.submeshes[i];
                     glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
