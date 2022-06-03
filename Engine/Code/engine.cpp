@@ -973,11 +973,13 @@ void Render(App* app)
 
                     u32 submesh_material_index = model.materialIdx[i];
                     Material& submesh_material = app->materials[submesh_material_index];
+                    bool hasTex = submesh_material.albedoTextureIdx < UINT32_MAX && submesh_material.albedoTextureIdx != 0 ? true : false;
 
                     glActiveTexture(GL_TEXTURE0);
-                    glBindTexture(GL_TEXTURE_2D, app->textures[submesh_material.albedoTextureIdx < UINT32_MAX || submesh_material.albedoTextureIdx != 0 ? submesh_material.albedoTextureIdx : app->whiteTexIdx].handle);
+
+                    glBindTexture(GL_TEXTURE_2D, app->textures[(hasTex) ? submesh_material.albedoTextureIdx : app->whiteTexIdx].handle);
                     glUniform1i(app->deferredGeometryProgram_uTexture, 0);
-                    glUniform3f(app->deferredGeometryProgram_uColor, submesh_material.albedo.r, submesh_material.albedo.g, submesh_material.albedo.b);
+                    glUniform3f(app->deferredGeometryProgram_uColor, (hasTex) ? 1.0F : submesh_material.albedo.r, (hasTex) ? 1.0F : submesh_material.albedo.g, (hasTex) ? 1.0F : submesh_material.albedo.b);
 
                     Submesh& submesh = mesh.submeshes[i];
                     glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);

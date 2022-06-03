@@ -207,7 +207,7 @@ void main()
 
 	oPosition = vec4(vPosition, 1.0);
 	oNormals = vec4(normalize(vNormal), 1.0);
-	oColor = vec4(uColor, 1.0);
+	oColor = vec4(c*uColor, 1.0);
 
 	gl_FragDepth = gl_FragCoord.z - 0.2;
 }
