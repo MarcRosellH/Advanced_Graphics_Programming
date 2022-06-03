@@ -86,6 +86,7 @@ in vec2 vTexCoord;
 in vec3 vPosition;	// In worldspace
 in vec3 vNormal;	// In worldspace
 in vec3 vViewDir;
+uniform vec3 uColor;
 
 struct Light
 {
@@ -124,7 +125,8 @@ vec3 PointLight(Light light)
 
 void main()
 {
-	vec4 objectColor = texture(uTexture, vTexCoord);
+	vec3 objectColor = texture(uTexture, vTexCoord).rgb;
+	vec3 c = objectColor*uColor;
 	vec4 spec = vec4(0.0);
 
 	vec3 lightFactor = vec3(0.0);
@@ -151,7 +153,7 @@ void main()
 		}
 	}
 
-	oColor = vec4(lightFactor, 1.0) * objectColor;
+	oColor = vec4(lightFactor, 1.0) * vec4(c, 1.0);
 	gl_FragDepth = gl_FragCoord.z - 0.2;
 }
 

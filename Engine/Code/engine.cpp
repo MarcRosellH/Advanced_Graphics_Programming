@@ -329,6 +329,7 @@ void Init(App* app)
     }
     
     app->texturedMeshProgram_uTexture = glGetUniformLocation(texturedMeshProgram.handle, "uTexture");
+    app->texturedMeshProgram_uColor = glGetUniformLocation(texturedMeshProgram.handle, "uColor");
 
     // [Deferred Render] Geometry Pass Program
     app->deferredGeometryPassProgramIdx = LoadProgram(app, "shaders.glsl", "DEFERRED_GEOMETRY_PASS");
@@ -920,10 +921,12 @@ void Render(App* app)
 
                         u32 submeshMaterialIdx = model.materialIdx[i];
                         Material& submeshMaterial = app->materials[submeshMaterialIdx];
+                        bool hasTex = submeshMaterial.albedoTextureIdx < UINT32_MAX && submeshMaterial.albedoTextureIdx != 0 ? true : false;
 
                         glActiveTexture(GL_TEXTURE0);
-                        glBindTexture(GL_TEXTURE_2D, app->textures[submeshMaterial.albedoTextureIdx < UINT32_MAX ? submeshMaterial.albedoTextureIdx : app->whiteTexIdx].handle);
+                        glBindTexture(GL_TEXTURE_2D, app->textures[hasTex ? submeshMaterial.albedoTextureIdx : app->whiteTexIdx].handle);
                         glUniform1i(app->texturedMeshProgram_uTexture, 0);
+                        glUniform3f(app->texturedMeshProgram_uColor, (hasTex) ? 1.0F : submeshMaterial.albedo.r, (hasTex) ? 1.0F : submeshMaterial.albedo.g, (hasTex) ? 1.0F : submeshMaterial.albedo.b);
 
                         Submesh& submesh = mesh.submeshes[i];
                         glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);

@@ -258,6 +258,7 @@ struct App
 
     // Uniforms
     GLint texturedMeshProgram_uTexture;
+    GLint texturedMeshProgram_uColor;
 
     GLint deferredGeometryProgram_uTexture;
     GLint deferredGeometryProgram_uColor;
