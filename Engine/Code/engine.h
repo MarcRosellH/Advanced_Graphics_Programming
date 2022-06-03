@@ -288,6 +288,18 @@ struct App
 
     GLuint forwardFrameBuffer;
 
+    // Water reflection
+    GLuint waterReflectionAttachmentHandle;
+    GLuint waterReflectionDepthAttachmentHandle;
+
+    GLuint waterReflectionFrameBuffer;
+
+    // Water refraction
+    GLuint waterRefractionAttachmentHandle;
+    GLuint waterRefractionDepthAttachmentHandle;
+
+    GLuint waterRefrationFrameBuffer;
+
     // ---------------------------------
 
     FBOAttachmentType currentFBOAttachmentType;
