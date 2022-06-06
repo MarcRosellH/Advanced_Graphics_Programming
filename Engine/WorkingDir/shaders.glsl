@@ -129,7 +129,7 @@ void main()
 	vec3 c = objectColor*uColor;
 	vec4 spec = vec4(0.0);
 
-	vec3 lightFactor = vec3(0.0);
+	vec3 lightFactor = vec3(1.0);
 	for(int i = 0; i < uLightCount; ++i)
 	{
 		switch(uLight[i].type)
@@ -323,7 +323,7 @@ void main()
 
 	vec3 viewDir = normalize(uCameraPosition - FragPos);
 
-	vec3 lighting = Diffuse * 0.1;
+	vec3 lighting = Diffuse * 1.0;
     for(int i = 0; i < uLightCount; ++i)
     {
 		switch(uLight[i].type)
@@ -355,37 +355,100 @@ void main()
 	oFinalRender = vec4(lighting * Diffuse, 1.0);
 }
 
-#ifdef LIGHT_DEBUG
+#endif
+#endif
+
+///////////////////////////////////////////////////////////////////////
+#ifdef CLIPPED_MESHES
 
 #if defined(VERTEX) ///////////////////////////////////////////////////
 
-layout (location = 0) in vec3 aPosition;
-layout (location = 1) in vec3 aNormal;
-layout (location = 2) in vec2 aTexCoords;
+layout(location=0) in vec3 aPosition;
+layout(location=1) in vec3 aNormal;
+layout(location=2) in vec2 aTexCoord;
 
-uniform mat4 uProjection;
+layout(binding = 0, std140) uniform GlobalParams
+{
+	vec3 uCameraPosition;
+	unsigned int uLightCount;
+	Light uLight[50];
+};
+
+layout(binding = 1, std140) uniform LocalParams
+{
+	mat4 uWorldMatrix;
+	mat4 uWorldViewProjectionMatrix;
+};
+
+uniform mat4 uProj;
 uniform mat4 uView;
 uniform mat4 uModel;
 
+uniform vec4 uClippingPlane;
+
+out vec2 vTexCoord;
+out vec3 vPosition;
+out vec3 vNormal;
+
 void main()
 {
-	gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
+	vTexCoord = aTexCoord;
+
+	vPosition = vec3(uWorldMatrix * vec4(aPosition, 1.0));
+
+	vNormal = vec3(transpose(inverse(uWorldMatrix)) * vec4(aNormal * 1.0));
+
+	gl_ClipDistance[0] = dot(vec4(vPosition, 1.0), uClippingPlane);
+
+	gl_Position = uProj * uView * uModel * vec4(aPosition, 1.0);
 }
 
 #elif defined(FRAGMENT) ///////////////////////////////////////////////
 
-uniform vec3 uLightColor;
+in vec2 vTexCoord;
+in vec3 vPosition;
+in vec3 vNormal;
+
+struct Light
+{
+	unsigned int type;
+	vec3 color;
+	vec3 direction;
+	float intensity;
+	vec3 position;
+	float radius;
+};
+
+layout(binding = 0, std140) uniform GlobalParams
+{
+	vec3 uCameraPosition;
+	unsigned int uLightCount;
+	Light uLight[50];
+};
+
+uniform sampler2D uTexture;
+uniform samplerCube uSkybox;
+uniform vec3 uColor;
 
 layout(location = 0) out vec4 oFinalRender;
 
+out float gl_FragDepth;
+
+layout(location=0) out vec4 oColor;
+
 void main()
 {
-	oFinalRender = vec4(uLightColor, 1.0);
+	vec4 c = vec4(texture(uTexture, vTexCoord).rgb * uColor, 1.0);
+
+
+	vec3 I = normalize(vPosition - uCameraPosition);
+	vec3 R = reflect(I, normalize(vNormal));
+
+	vec4 reflections = vec4(texture(uSkybox, R).rgb, 1.0);
+	oColor = mix(c, reflections, 0.5);
+
+	gl_FragDepth = gl_FragCoord.z - 0.2;
 }
-
-
-#endif
-#endif
 
 #endif
 #endif

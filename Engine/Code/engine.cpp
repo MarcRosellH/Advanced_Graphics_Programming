@@ -1011,12 +1011,11 @@ void Update(App* app)
 
 void Render(App* app)
 {
-
+    glClearColor(0.f, 0.f, 0.f, 1.0f);
     switch (app->mode)
     {
         case Mode_TexturedQuad:
             {
-                glClearColor(0.1F, 0.1F, 0.1F, 1.0F);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 glViewport(0, 0, app->displaySize.x, app->displaySize.y);
@@ -1044,8 +1043,7 @@ void Render(App* app)
         case Mode_TexturedMesh:
             {
             glBindFramebuffer(GL_FRAMEBUFFER, app->forwardFrameBuffer);
-
-                glClearColor(0.1F, 0.1F, 0.1F, 1.0F);
+            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 glViewport(0, 0, app->displaySize.x, app->displaySize.y);
@@ -1093,7 +1091,28 @@ void Render(App* app)
             break;
         case Mode_Deferred:
             {
-            glClearColor(0.f, 0.f, 0.f, 1.0f);
+
+            /* Water reflection */
+
+            glBindFramebuffer(GL_FRAMEBUFFER, app->waterReflectionFrameBuffer);
+            GLenum buffers[] = { GL_COLOR_ATTACHMENT0 };
+            glDrawBuffers(ARRAY_COUNT(buffers), buffers);
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            glViewport(0, 0, app->displaySize.x, app->displaySize.y);
+
+            glEnable(GL_DEPTH_TEST);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            glEnable(GL_CLIP_DISTANCE0);
+
+            
+
+            /* Water refraction */
+
+
 
             /* First pass (geometry) */
 
@@ -1161,7 +1180,6 @@ void Render(App* app)
 
             glBindFramebuffer(GL_FRAMEBUFFER, app->fBuffer);
 
-            glClearColor(0.f, 0.f, 0.f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             GLenum drawBuffersFBuffer[] = { GL_COLOR_ATTACHMENT3 };
