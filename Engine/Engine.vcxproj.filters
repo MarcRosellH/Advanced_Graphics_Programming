@@ -112,11 +112,5 @@
     <None Include="WorkingDir\ConvolutionShader.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="WorkingDir\equirectangularToCubemapShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="WorkingDir\PBRshader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
   </ItemGroup>
 </Project>

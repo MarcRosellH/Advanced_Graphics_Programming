@@ -235,8 +235,6 @@ struct App
     //skybox program
     u32 skyBox;
     u32 ConvolutionShader;
-    u32 pbrShader;
-    u32 equirectangularToCubemapShader;
 
     // Texture indices
     u32 diceTexIdx;
@@ -271,6 +269,10 @@ struct App
 
     GLint deferredGeometryProgram_uSkybox;
     GLint deferredGeometryProgram_uIrradiance;
+
+    GLint convolutionProgram_uSkybox;
+
+    GLint skyboxProgram_uSkybox;
 
     GLint deferredLightingProgram_uGPosition;
     GLint deferredLightingProgram_uGNormals;
@@ -371,7 +373,6 @@ glm::mat4 MatrixFromPositionRotationScale(const vec3& position, const vec3& rota
 
 void RenderQuad(App* app);
 
-void CreateCubeMap(App* app, Image image[6]);
 void RenderSkybox(App* app);
 void SetCamera(Camera& cam);
 
@@ -386,3 +387,5 @@ void HandleInput(App* app);
 void LoadSphere(App* app);
 
 void RenderSphere(App* app);
+
+void LoadIrradianceMap(App* app);
