@@ -284,6 +284,8 @@ struct App
     GLuint diffuseAttachmentHandle;
     GLuint depthAttachmentHandle;
     GLuint cubeMapId;
+    GLuint irradianceMapId;
+
     GLuint cubeMapFBO;
     GLuint captureFBO;
     GLuint captureRBO;
