@@ -50,6 +50,7 @@
     <ClInclude Include="ThirdParty\stb\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="WorkingDir\ConvolutionShader.glsl" />
     <None Include="WorkingDir\shaders.glsl" />
     <None Include="WorkingDir\Skybox.glsl" />
   </ItemGroup>

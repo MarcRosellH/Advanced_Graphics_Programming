@@ -274,37 +274,16 @@ void Init(App* app)
     Program& texturedGeometryProgram = app->programs[app->texturedGeometryProgramIdx];
     app->programUniformTexture = glGetUniformLocation(texturedGeometryProgram.handle, "uTexture");
 
+    app->ConvolutionShader = LoadProgram(app, "ConvolutionShader.glsl", "CONVOLUTION");
+
     app->diceTexIdx = LoadTexture2D(app, "dice.png");
     app->whiteTexIdx = LoadTexture2D(app, "color_white.png");
     app->blackTexIdx = LoadTexture2D(app, "color_black.png");
     app->normalTexIdx = LoadTexture2D(app, "color_normal.png");
     app->magentaTexIdx = LoadTexture2D(app, "color_magenta.png");
 
-    //Image pixels[6];
-    //pixels[0] = LoadSkyboxPixels(app, "Skybox/skyboxX+.png");
-    //pixels[1] = LoadSkyboxPixels(app, "Skybox/skyboxX-.png");
-    //pixels[2] = LoadSkyboxPixels(app, "Skybox/skyboxY+.png");
-    //pixels[3] = LoadSkyboxPixels(app, "Skybox/skyboxY-.png");
-    //pixels[4] = LoadSkyboxPixels(app, "Skybox/skyboxZ+.png");
-    //pixels[5] = LoadSkyboxPixels(app, "Skybox/skyboxZ-.png");
-   
-    //glGenTextures(1, &app->cubeMapId);
-    //glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
+    
 
-    //for (unsigned int i = 0; i < 6; ++i)
-    //{
-    //    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB,
-    //        pixels[i].size.x, pixels[i].size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels[i].pixels);
-
-    //    //FreeImage(pixels[i]);
-
-    //}
-    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-   // CreateCubeMap(app, pixels);
     std::vector<std::string> faces = 
     {
         "right.jpg",
@@ -314,6 +293,14 @@ void Init(App* app)
         "front.jpg",
         "back.jpg"
     };
+
+    glGenFramebuffers(1, &app->captureFBO);
+    glGenRenderbuffers(1, &app->captureRBO);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, app->captureFBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, app->captureRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, app->captureRBO);
     app->cubeMapId = loadCubemap(faces);
     // Create uniform buffers
     glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &app->maxUniformBufferSize);
@@ -1077,6 +1064,16 @@ void Render(App* app)
 
             Program& skyBoxProgram = app->programs[app->skyBox];
             glUseProgram(skyBoxProgram.handle);
+
+            glDepthFunc(GL_LEQUAL);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
+
+            i32 projLoc = glGetUniformLocation(skyBoxProgram.handle, "projection");
+            i32 viewLoc = glGetUniformLocation(skyBoxProgram.handle, "view");
+
+            glUniformMatrix4fv(projLoc, 1, GL_FALSE, &app->projectionMat[0][0]);
+            glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &app->viewMat[0][0]);
+
             RenderSkybox(app);
 
             glUseProgram(0);
@@ -1508,6 +1505,8 @@ void RenderSphere(App* app)
 
 void RenderSkybox(App* app)
 {
+
+
     if (app->SKyboxVAO == 0)
     {
         float skyboxVertices[] = {
@@ -1567,16 +1566,9 @@ void RenderSkybox(App* app)
         //Unbinding
         glBindVertexArray(0);
     }
-    glDepthFunc(GL_LEQUAL);
-    glBindVertexArray(app->SKyboxVAO);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
-    
-    Program& skyBoxProgram = app->programs[app->skyBox];
-    i32 projLoc = glGetUniformLocation(skyBoxProgram.handle, "projection");
-    i32 viewLoc = glGetUniformLocation(skyBoxProgram.handle, "view");
+  
 
-    glUniformMatrix4fv(projLoc, 1, GL_FALSE, &app->projectionMat[0][0]);
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &app->viewMat[0][0]);
+    glBindVertexArray(app->SKyboxVAO);
 
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -1587,25 +1579,7 @@ void RenderSkybox(App* app)
 
 }
 
-void CreateCubeMap(App* app, Image pixels[6])
-{
-    glGenTextures(1, &app->cubeMapId);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
 
-    for (unsigned int i = 0; i < 6; ++i)
-    {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB,
-            app->displaySize.x, app->displaySize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels[i].pixels);
-
-        FreeImage(pixels[i]);
-
-    }
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-}
 
 
 //void HDRImage(const char* filename)

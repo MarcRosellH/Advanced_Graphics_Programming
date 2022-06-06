@@ -234,6 +234,7 @@ struct App
     u32 deferredLightProgramIdx;
     //skybox program
     u32 skyBox;
+    u32 ConvolutionShader;
 
     // Texture indices
     u32 diceTexIdx;
@@ -283,6 +284,9 @@ struct App
     GLuint diffuseAttachmentHandle;
     GLuint depthAttachmentHandle;
     GLuint cubeMapId;
+    GLuint cubeMapFBO;
+    GLuint captureFBO;
+    GLuint captureRBO;
 
     GLuint fBuffer;
     GLuint finalRenderAttachmentHandle;

@@ -217,7 +217,7 @@ void main()
     vec3 R = reflect(I, normalize(vNormal));
 	vec4 ReflectionColor = vec4(texture(skybox, R).rgb, 1.0);
     oColor = mix(vec4(uColor, 1.0), ReflectionColor, 0.5);
-	oColor = vec4(c * oColor.rgb, 1.0);
+	oColor = vec4( oColor.rgb, 1.0);
 
 	gl_FragDepth = gl_FragCoord.z - 0.2;
 }

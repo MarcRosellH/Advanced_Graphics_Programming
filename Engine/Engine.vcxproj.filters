@@ -109,5 +109,8 @@
     <None Include="WorkingDir\Skybox.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="WorkingDir\ConvolutionShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
