@@ -308,9 +308,6 @@ void Init(App* app)
     app->programUniformTexture = glGetUniformLocation(texturedGeometryProgram.handle, "uTexture");
 
     app->ConvolutionShader = LoadProgram(app, "ConvolutionShader.glsl", "CONVOLUTION");
-    app->pbrShader = LoadProgram(app, "PBRshader.glsl", "PBR");
-
-    app->equirectangularToCubemapShader = LoadProgram(app, "equirectangularToCubemapShader.glsl", "EQUITOCUBE");
     
     app->diceTexIdx = LoadTexture2D(app, "dice.png");
     app->whiteTexIdx = LoadTexture2D(app, "color_white.png");
@@ -675,77 +672,6 @@ void Init(App* app)
 
 
 }
-//void LoadIrradianceMap(App* app)
-//{
-//    glGenFramebuffers(1, &app->captureFBO);
-//
-//    glGenRenderbuffers(1, &app->captureRBO);
-//    glBindFramebuffer(GL_FRAMEBUFFER, app->captureFBO);
-//    glBindRenderbuffer(GL_RENDERBUFFER, app->captureRBO);
-//    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
-//    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, app->captureRBO);
-//
-//    glGenTextures(1, &app->irradianceMapId);
-//    glBindTexture(GL_TEXTURE_CUBE_MAP, app->irradianceMapId);
-//
-//    for (u32 i = 0; i < 6; i++)
-//    {
-//        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-//            0, GL_RGB16F, 32, 32, 0, GL_RGB, GL_FLOAT, nullptr);
-//    }
-//
-//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//
-//    glBindFramebuffer(GL_FRAMEBUFFER, app->captureFBO);
-//    glBindRenderbuffer(GL_RENDERBUFFER, app->captureRBO);
-//    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 32, 32);
-//
-//    Program& irradianceMapProgram = app->programs[app->ConvolutionShader];
-//    glUseProgram(irradianceMapProgram.handle);
-//
-//    glm::mat4 captureViews[] =
-//    {
-//        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-//        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-//        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
-//        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
-//        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-//        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
-//    };
-//
-//    glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-//    GLuint projectionLocation = glGetUniformLocation(irradianceMapProgram.handle, "projection");
-//    glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &captureProjection[0][0]);
-//
-//    glActiveTexture(GL_TEXTURE0);
-//    glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
-//    GLuint textureLocation = glGetUniformLocation(irradianceMapProgram.handle, "environmentMap");
-//    glUniform1d(textureLocation, 0);
-//
-//    glViewport(0, 0, 32, 32);
-//    glBindFramebuffer(GL_FRAMEBUFFER, app->captureFBO);
-//
-//    for (size_t i = 0; i < 6; i++)
-//    {
-//        GLuint viewLocation = glGetUniformLocation(irradianceMapProgram.handle, "view");
-//        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &captureViews[i][0][0]);
-//        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, app->irradianceMapId, 0);
-//        glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
-//        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//
-//        RenderSkybox(app);
-//
-//    }
-//
-//    glUseProgram(0);
-//    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-//    glViewport(0, 0, app->displaySize.x, app->displaySize.y);
-//    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-//}
 
 void LoadIrradianceMap(App* app)
 {
