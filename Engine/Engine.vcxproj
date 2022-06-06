@@ -51,6 +51,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="WorkingDir\ConvolutionShader.glsl" />
+    <None Include="WorkingDir\equirectangularToCubemapShader.glsl" />
+    <None Include="WorkingDir\PBRshader.glsl" />
     <None Include="WorkingDir\shaders.glsl" />
     <None Include="WorkingDir\Skybox.glsl" />
   </ItemGroup>

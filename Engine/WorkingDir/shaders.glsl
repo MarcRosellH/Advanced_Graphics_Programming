@@ -198,6 +198,7 @@ uniform sampler2D uTexture;
 uniform vec3 uColor;
 uniform vec3 cameraPos;
 uniform samplerCube skybox;
+uniform samplerCube irradianceMap;
 
 layout(location = 0) out vec4 oPosition;
 layout(location = 1) out vec4 oNormals;
@@ -216,8 +217,13 @@ void main()
 	vec3 I = normalize(vPosition - cameraPos);
     vec3 R = reflect(I, normalize(vNormal));
 	vec4 ReflectionColor = vec4(texture(skybox, R).rgb, 1.0);
-    oColor = mix(vec4(uColor, 1.0), ReflectionColor, 0.5);
-	oColor = vec4( oColor.rgb, 1.0);
+
+	vec3 ambient = texture(irradianceMap, vNormal).rgb;
+
+
+    oColor = mix(vec4(uColor, 1.0), ReflectionColor, 0.2) * vec4(ambient, 1.0);
+
+	// * vec4(ambient, 1.0)
 
 	gl_FragDepth = gl_FragCoord.z - 0.2;
 }
@@ -331,7 +337,7 @@ void main()
 
 	vec3 viewDir = normalize(uCameraPosition - FragPos);
 
-	vec3 lighting = Diffuse * 0.1;
+	vec3 lighting = Diffuse * 1.0;
     for(int i = 0; i < uLightCount; ++i)
     {
 		switch(uLight[i].type)

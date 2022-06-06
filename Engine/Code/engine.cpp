@@ -209,7 +209,6 @@ unsigned int loadCubemap(std::vector<std::string> faces, App* app)
             std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
             stbi_image_free(data);
         }
-        RenderSkybox(app);
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -220,6 +219,169 @@ unsigned int loadCubemap(std::vector<std::string> faces, App* app)
     return textureID;
 }
 
+unsigned int loadIrradiancemap(std::vector<std::string> faces, App* app)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                0, GL_RGB, 32, 32, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+            );
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+}
+
+
+void LoadCubeMaps(App* app)
+{
+    unsigned int captureFBO;
+    unsigned int captureRBO;
+    glGenFramebuffers(1, &captureFBO);
+    glGenRenderbuffers(1, &captureRBO);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);
+
+    // pbr: load the HDR environment map
+    // ---------------------------------
+    stbi_set_flip_vertically_on_load(true);
+    int width, height, nrComponents;
+    float* data = stbi_loadf("Barce_Rooftop_C_Env.hdr", &width, &height, &nrComponents, 0);
+    unsigned int hdrTexture;
+    if (data)
+    {
+        glGenTextures(1, &hdrTexture);
+        glBindTexture(GL_TEXTURE_2D, hdrTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data); // note how we specify the texture's data value to be float
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    }
+    else
+    {
+        std::cout << "Failed to load HDR image." << std::endl;
+    }
+
+    // pbr: setup cubemap to render to and attach to framebuffer
+    // ---------------------------------------------------------
+    
+    glGenTextures(1, &app->cubeMapId);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, nullptr);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // pbr: set up projection and view matrices for capturing data onto the 6 cubemap face directions
+    // ----------------------------------------------------------------------------------------------
+    glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+    glm::mat4 captureViews[] =
+    {
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+    };
+
+    // pbr: convert HDR equirectangular environment map to cubemap equivalent
+    // ----------------------------------------------------------------------
+    Program& equirectangularProgram = app->programs[app->equirectangularToCubemapShader];
+    glUseProgram(equirectangularProgram.handle);
+    i32 projLoc = glGetUniformLocation(equirectangularProgram.handle, "projection");
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, &app->projectionMat[0][0]);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, hdrTexture);
+
+    glViewport(0, 0, 512, 512); // don't forget to configure the viewport to the capture dimensions.
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        i32 viewLoc = glGetUniformLocation(equirectangularProgram.handle, "view");
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &captureViews[i][0][0]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, app->cubeMapId, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        RenderSkybox(app);
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // pbr: create an irradiance cubemap, and re-scale capture FBO to irradiance scale.
+    // --------------------------------------------------------------------------------
+    unsigned int irradianceMap;
+    glGenTextures(1, &irradianceMap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 32, 32, 0, GL_RGB, GL_FLOAT, nullptr);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 32, 32);
+
+    // pbr: solve diffuse integral by convolution to create an irradiance (cube)map.
+    // -----------------------------------------------------------------------------
+    Program& convolutionProgram = app->programs[app->ConvolutionShader];
+    glUseProgram(convolutionProgram.handle);
+    
+    projLoc = glGetUniformLocation(convolutionProgram.handle, "projection");
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, &app->projectionMat[0][0]);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
+
+    glViewport(0, 0, 32, 32); // don't forget to configure the viewport to the capture dimensions.
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        i32 viewLoc = glGetUniformLocation(convolutionProgram.handle, "view");
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &captureViews[i][0][0]);
+
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradianceMap, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        RenderSkybox(app);
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 void Init(App* app)
 {
 
@@ -276,7 +438,10 @@ void Init(App* app)
     app->programUniformTexture = glGetUniformLocation(texturedGeometryProgram.handle, "uTexture");
 
     app->ConvolutionShader = LoadProgram(app, "ConvolutionShader.glsl", "CONVOLUTION");
+    app->pbrShader = LoadProgram(app, "PBRshader.glsl", "PBR");
 
+    app->equirectangularToCubemapShader = LoadProgram(app, "equirectangularToCubemapShader.glsl", "EQUITOCUBE");
+    
     app->diceTexIdx = LoadTexture2D(app, "dice.png");
     app->whiteTexIdx = LoadTexture2D(app, "color_white.png");
     app->blackTexIdx = LoadTexture2D(app, "color_black.png");
@@ -295,19 +460,27 @@ void Init(App* app)
         "back.jpg"
     };
 
-    glGenFramebuffers(1, &app->captureFBO);
-    glGenRenderbuffers(1, &app->captureRBO);
+    //LoadCubeMaps(app);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, app->captureFBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, app->captureRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, app->captureRBO);
+   
+    
+    
     app->cubeMapId = loadCubemap(faces, app);
+
+    Program& convolutionProgram = app->programs[app->ConvolutionShader];
+    glUseProgram(convolutionProgram.handle);
+    i32 projLoc = glGetUniformLocation(convolutionProgram.handle, "projection");
+    i32 viewLoc = glGetUniformLocation(convolutionProgram.handle, "view");
+
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &app->viewMat[0][0]);
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, &app->projectionMat[0][0]);
+    app->irradianceMapId = loadIrradiancemap(faces, app);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
     // irradiance   ******************************************************************************************************
-    glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+   /* glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     glm::mat4 captureViews[] =
     {
         glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
@@ -336,10 +509,11 @@ void Init(App* app)
 
     Program& convolutionProgram = app->programs[app->ConvolutionShader];
     glUseProgram(convolutionProgram.handle);
-
     i32 projLoc = glGetUniformLocation(convolutionProgram.handle, "projection");
-
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, &app->projectionMat[0][0]);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
 
     glViewport(0, 0, 32, 32);
     glBindFramebuffer(GL_FRAMEBUFFER, app->captureFBO);
@@ -354,7 +528,7 @@ void Init(App* app)
 
         RenderSkybox(app);
     }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);*/
 
     //******************************************************************************************************
 
@@ -478,7 +652,8 @@ void Init(App* app)
 
     app->deferredGeometryProgram_uTexture = glGetUniformLocation(deferredGeoPassProgram.handle, "uTexture");
     app->deferredGeometryProgram_uColor = glGetUniformLocation(deferredGeoPassProgram.handle, "uColor");
-
+    app->deferredGeometryProgram_uSkybox = glGetUniformLocation(deferredGeoPassProgram.handle, "skybox");
+    app->deferredGeometryProgram_uIrradiance = glGetUniformLocation(deferredGeoPassProgram.handle, "irradianceMap");
     // [Deferred Render] Lighting Pass Program
     app->deferredLightingPassProgramIdx = LoadProgram(app, "shaders.glsl", "DEFERRED_LIGHTING_PASS");
 
@@ -1103,8 +1278,14 @@ void Render(App* app)
                     glActiveTexture(GL_TEXTURE0);
 
                     glBindTexture(GL_TEXTURE_2D, app->textures[(hasTex) ? submesh_material.albedoTextureIdx : app->whiteTexIdx].handle);
-                   // glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
                     glUniform1i(app->deferredGeometryProgram_uTexture, 0);
+                    glActiveTexture(GL_TEXTURE1);
+                    glBindTexture(GL_TEXTURE_CUBE_MAP, app->irradianceMapId);
+                    glUniform1i(app->deferredGeometryProgram_uIrradiance, 1);
+                    glActiveTexture(GL_TEXTURE2);
+                    glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
+                    glUniform1i(app->deferredGeometryProgram_uSkybox, 2);
+
                     glUniform3f(app->deferredGeometryProgram_uColor, (hasTex) ? 1.0F : submesh_material.albedo.r, (hasTex) ? 1.0F : submesh_material.albedo.g, (hasTex) ? 1.0F : submesh_material.albedo.b);
                     glUniform3f(cp, app->cam.position.x, app->cam.position.y, app->cam.position.z);
 
@@ -1120,9 +1301,13 @@ void Render(App* app)
 
             Program& skyBoxProgram = app->programs[app->skyBox];
             glUseProgram(skyBoxProgram.handle);
-
-            glDepthFunc(GL_LEQUAL);
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
+            glUniform1i(app->deferredGeometryProgram_uSkybox, 0);
+
+            glDepthFunc(GL_LEQUAL); 
+            glActiveTexture(GL_TEXTURE0);
+
 
             i32 projLoc = glGetUniformLocation(skyBoxProgram.handle, "projection");
             i32 viewLoc = glGetUniformLocation(skyBoxProgram.handle, "view");
@@ -1130,6 +1315,8 @@ void Render(App* app)
             glUniformMatrix4fv(projLoc, 1, GL_FALSE, &app->projectionMat[0][0]);
             glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &app->viewMat[0][0]);
 
+          //  glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
+            //    glBindTexture(GL_TEXTURE_CUBE_MAP, app->irradianceMapId);
             RenderSkybox(app);
 
             glUseProgram(0);

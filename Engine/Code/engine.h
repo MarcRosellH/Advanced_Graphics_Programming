@@ -235,6 +235,8 @@ struct App
     //skybox program
     u32 skyBox;
     u32 ConvolutionShader;
+    u32 pbrShader;
+    u32 equirectangularToCubemapShader;
 
     // Texture indices
     u32 diceTexIdx;
@@ -266,6 +268,9 @@ struct App
 
     GLint deferredGeometryProgram_uTexture;
     GLint deferredGeometryProgram_uColor;
+
+    GLint deferredGeometryProgram_uSkybox;
+    GLint deferredGeometryProgram_uIrradiance;
 
     GLint deferredLightingProgram_uGPosition;
     GLint deferredLightingProgram_uGNormals;
