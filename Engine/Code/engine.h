@@ -298,7 +298,7 @@ struct App
     GLuint waterRefractionAttachmentHandle;
     GLuint waterRefractionDepthAttachmentHandle;
 
-    GLuint waterRefrationFrameBuffer;
+    GLuint waterRefractionFrameBuffer;
 
     // ---------------------------------
 
