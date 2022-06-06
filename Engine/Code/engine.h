@@ -272,6 +272,10 @@ struct App
     GLint deferredGeometryProgram_uSkybox;
     GLint deferredGeometryProgram_uIrradiance;
 
+    GLint convolutionProgram_uSkybox;
+
+    GLint skyboxProgram_uSkybox;
+
     GLint deferredLightingProgram_uGPosition;
     GLint deferredLightingProgram_uGNormals;
     GLint deferredLightingProgram_uGDiffuse;
@@ -379,3 +383,5 @@ void HandleInput(App* app);
 void LoadSphere(App* app);
 
 void RenderSphere(App* app);
+
+void LoadIrradianceMap(App* app);

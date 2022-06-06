@@ -221,7 +221,7 @@ void main()
 	vec3 ambient = texture(irradianceMap, vNormal).rgb;
 
 
-    oColor = mix(vec4(uColor, 1.0), ReflectionColor, 0.2) * vec4(ambient, 1.0);
+    oColor = mix(vec4(uColor, 1.0), ReflectionColor, 0.8) * vec4(ambient, 1.0);
 
 	// * vec4(ambient, 1.0)
 

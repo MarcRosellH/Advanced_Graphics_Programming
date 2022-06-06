@@ -2,34 +2,33 @@
 #ifdef CONVOLUTION
 
 #if defined(VERTEX) ///////////////////////////////////////////////////
-layout (location = 0) in vec3 aPos;
-
-out vec3 WorldPos;
+layout(location = 0) in vec3 aPosition;
 
 uniform mat4 projection;
 uniform mat4 view;
 
+out vec3 worldPos;
+
 void main()
 {
-    WorldPos = aPos;  
-    gl_Position =  projection * view * vec4(WorldPos, 1.0);
+    worldPos = aPosition;
+    gl_Position = (projection * view * vec4(worldPos, 1.0f)).xyww;
 }
 
 #elif defined(FRAGMENT) ///////////////////////////////////////////////
 
-out vec4 FragColor;
-
-in vec3 WorldPos;
+in vec3 worldPos;
 
 uniform samplerCube environmentMap;
-const float PI = 3.14159265359;
 
-layout(location=0) out vec4 oColor;
+layout(location = 0) out vec4 oColor;
+
+const float PI = 3.14159265359;
 
 void main()
 {
-    vec3 N = normalize(WorldPos);
-	vec3 irradiance = vec3(0.0);
+    vec3 N = normalize(worldPos);
+    vec3 irradiance = vec3(0.0);   
 
     vec3 up    = vec3(0.0, 1.0, 0.0);
     vec3 right = normalize(cross(up, N));
@@ -50,11 +49,10 @@ void main()
             nrSamples++;
         }
     }
-    irradiance = PI * irradiance * (1.0 / float(nrSamples));
     
-    FragColor = vec4(irradiance, 1.0);
+    irradiance = PI * irradiance * (1.0 / float(nrSamples));
 
+    oColor = vec4(irradiance, 1.0);
 }
-
 #endif
 #endif
