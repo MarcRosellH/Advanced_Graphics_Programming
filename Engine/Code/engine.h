@@ -165,6 +165,7 @@ struct Entity
     vec3        rotation;
     vec3        scale;
     u32         modelIdx;
+    float       metallic;
     u32         localParamsOffset;
     u32         localParamsSize;
 };

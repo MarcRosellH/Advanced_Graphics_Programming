@@ -62,12 +62,14 @@ layout(binding = 1, std140) uniform LocalParams
 {
 	mat4 uWorldMatrix;
 	mat4 uWorldViewProjectionMatrix;
+	float metallic;
 };
 
 out vec2 vTexCoord;
 out vec3 vPosition;	// In worldspace
 out vec3 vNormal;	// In worldspace
 out vec3 vViewDir;
+out float metallicness;
 
 void main()
 {
@@ -76,6 +78,7 @@ void main()
 	vPosition = vec3(uWorldMatrix * vec4(aPosition, 1.0));
 	vNormal = vec3(uWorldMatrix * vec4(aNormal, 0.0));
 	vViewDir = uCameraPosition - vPosition;
+	metallicness = metallic;
 
 	gl_Position = uWorldViewProjectionMatrix * vec4(aPosition, 1.0);
 }
@@ -86,6 +89,8 @@ in vec2 vTexCoord;
 in vec3 vPosition;	// In worldspace
 in vec3 vNormal;	// In worldspace
 in vec3 vViewDir;
+in float metallicness;
+
 uniform vec3 uColor;
 uniform vec3 cameraPos;
 
@@ -163,7 +168,7 @@ void main()
 	vec3 ambient = texture(irradianceMap, vNormal).rgb;
 
 
-    oColor =mix(vec4(lightFactor, 1.0)  * vec4(uColor, 1.0), ReflectionColor, 0.8) * vec4(ambient, 1.0);
+    oColor =mix(vec4(lightFactor, 1.0)  * vec4(uColor, 1.0), ReflectionColor, metallicness) * vec4(ambient, 1.0);
 
 
 	//oColor = vec4(lightFactor, 1.0) * vec4(c, 1.0);
@@ -186,18 +191,20 @@ layout(binding = 1, std140) uniform LocalParams
 {
 	mat4 uWorldMatrix;
 	mat4 uWorldViewProjectionMatrix;
+	float metallic;
 };
 
 out vec2 vTexCoord;
 out vec3 vPosition;
 out vec3 vNormal;
+out float metallicness;
 
 void main()
 {
 	vTexCoord = aTexCoord;
 	vPosition = vec3(uWorldMatrix * vec4(aPosition, 1.0));
 	vNormal = vec3(transpose(inverse(uWorldMatrix)) * vec4(aNormal, 1.0));
-
+	metallicness = metallic;
 	gl_Position = uWorldViewProjectionMatrix * vec4(aPosition, 1.0);
 }
 
@@ -206,6 +213,7 @@ void main()
 in vec2 vTexCoord;
 in vec3 vPosition;
 in vec3 vNormal;
+in float metallicness;
 
 uniform sampler2D uTexture;
 uniform vec3 uColor;
@@ -234,7 +242,7 @@ void main()
 	vec3 ambient = texture(irradianceMap, vNormal).rgb;
 
 
-    oColor = mix(vec4(uColor, 1.0), ReflectionColor, 0.8) * vec4(ambient, 1.0);
+    oColor = mix(vec4(uColor, 1.0), ReflectionColor, metallicness) * vec4(ambient, 1.0);
 
 	// * vec4(ambient, 1.0)
 

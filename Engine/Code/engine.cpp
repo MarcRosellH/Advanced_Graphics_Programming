@@ -334,7 +334,7 @@ void Init(App* app)
     //app->entities.push_back(Entity{ vec3(0,0,-6), vec3(0,90,0), vec3(1,1,1), app->patrickModelIdx });
     //app->entities.push_back(Entity{ vec3(-6,0,-6), vec3(45,45,45), vec3(1,1,1), app->patrickModelIdx });
     //app->entities.push_back(Entity{ vec3(0,0,-50), vec3(0,0,0), vec3(10,10,10), app->patrickModelIdx });
-    app->entities.push_back(Entity{ vec3(0,0,0), vec3(0,0,0), vec3(1,1,1), app->roomModelIdx });
+    app->entities.push_back(Entity{ vec3(0,0,0), vec3(0,0,0), vec3(1,1,1), app->roomModelIdx, 0.0 });
 
     // Lights initialization
     app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(1,1,1), vec3(0,0,0), vec3(1,-1,1), 100.0F, 10.0F });
@@ -794,6 +794,8 @@ void Gui(App* app)
                 ImGui::DragFloat3("Scale", (float*)&e.scale, 0.01F);
                 ImGui::Spacing();
 
+                ImGui::DragFloat("Metallic", (float*)&e.metallic, 0.01F, 0, 1);
+
                 ImGui::TreePop();
             }
         }
@@ -1030,7 +1032,7 @@ void Update(App* app)
 
         PushMat4(app->uniformBuffer, world);
         PushMat4(app->uniformBuffer, worldViewProjectionMatrix);
-
+        PushFloat(app->uniformBuffer, ref.metallic);
         ref.localParamsSize = app->uniformBuffer.head - ref.localParamsOffset;
     }
 
