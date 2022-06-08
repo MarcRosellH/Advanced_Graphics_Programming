@@ -131,6 +131,11 @@ vec3 PointLight(Light light)
 	return vec3(brightness) * light.color;
 }
 
+vec3 fresnelSchlick(float cosTheta, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
 void main()
 {
 	vec3 objectColor = texture(uTexture, vTexCoord).rgb;
@@ -160,15 +165,34 @@ void main()
 			}
 		}
 	}
-	
+	vec3 V = normalize(cameraPos - vPosition);
+	float ao = 0.5;
+	float Lo = 0.5;
+	vec3 F0 = vec3(0.04); 
+	vec3 albedo = vec3(0.2); 
+
+    F0 = mix(F0, albedo, 0.5);
 	vec3 I = normalize(vPosition - cameraPos);
     vec3 R = reflect(I, normalize(vNormal));
 	vec4 ReflectionColor = vec4(texture(skybox, R).rgb, 1.0);
 
-	vec3 ambient = texture(irradianceMap, vNormal).rgb;
 
+	  vec3 kS = fresnelSchlick(max(dot(vNormal, V), 0.0), F0);
+    vec3 kD = 1.0 - kS;
+    kD *= 1.0 - 0.5;	  
+    vec3 irradiance = texture(irradianceMap, vNormal).rgb;
+    vec3 diffuse      = irradiance * albedo;
+    vec3 ambient = (kD * diffuse) * ao;
+    // vec3 ambient = vec3(0.002);
+    
+    vec3 color = ambient;
 
-    oColor =mix(vec4(lightFactor, 1.0)  * vec4(uColor, 1.0), ReflectionColor, metallicness) * vec4(ambient, 1.0);
+    // HDR tonemapping
+    color = color / (color + vec3(1.0));
+    // gamma correct
+    color = pow(color, vec3(1.0/2.2)); 
+
+    oColor =mix(vec4(lightFactor, 1.0)  * vec4(uColor, 1.0), ReflectionColor, metallicness) ;
 
 
 	//oColor = vec4(lightFactor, 1.0) * vec4(c, 1.0);

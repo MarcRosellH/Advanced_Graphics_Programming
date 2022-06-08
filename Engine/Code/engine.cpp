@@ -1499,7 +1499,7 @@ void Render(App* app)
             Program& skyBoxProgram = app->programs[app->skyBox];
             glUseProgram(skyBoxProgram.handle);
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, app->irradianceMapId);
             glUniform1i(app->deferredGeometryProgram_uSkybox, 0);
 
             glDepthFunc(GL_LEQUAL); 
