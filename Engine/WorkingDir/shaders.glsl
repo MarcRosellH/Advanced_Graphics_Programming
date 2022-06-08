@@ -242,7 +242,7 @@ void main()
 	vec3 ambient = texture(irradianceMap, vNormal).rgb;
 
 
-    oColor = mix(vec4(uColor, 1.0), ReflectionColor, metallicness) * vec4(ambient, 1.0);
+    oColor = mix(vec4(uColor, 1.0), ReflectionColor, metallicness) * 1.7*vec4(ambient, 1.0);
 
 	// * vec4(ambient, 1.0)
 
@@ -587,7 +587,7 @@ void main()
 	vec3 R = reflect(I, N);
 	vec4 ref = vec4(texture(skyBox, R).rgb, 1.0);
 
-	const vec2 waveLength = vec2(2.0);
+	const vec2 waveLength = vec2(20.0);
 	const vec2 waveStrength = vec2(0.05);
 	const float turbidityDistance = 10.0;
 
