@@ -336,7 +336,7 @@ void Init(App* app)
     //app->entities.push_back(Entity{ vec3(0,0,-6), vec3(0,90,0), vec3(1,1,1), app->patrickModelIdx });
     //app->entities.push_back(Entity{ vec3(-6,0,-6), vec3(45,45,45), vec3(1,1,1), app->patrickModelIdx });
     //app->entities.push_back(Entity{ vec3(0,0,-50), vec3(0,0,0), vec3(10,10,10), app->patrickModelIdx });
-    app->entities.push_back(Entity{ vec3(0,-0.5F,0), vec3(0,0,0), vec3(1,1,1), app->roomModelIdx });
+    app->entities.push_back(Entity{ vec3(0,-10,0), vec3(0,0,0), vec3(1,1,1), app->roomModelIdx });
 
     // Lights initialization
     app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(1,1,1), vec3(0,0,0), vec3(1,-1,1), 100.0F, 10.0F });
@@ -1400,7 +1400,7 @@ void Render(App* app)
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            GLenum drawBuffersGBuffer[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5};
+            GLenum drawBuffersGBuffer[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
             glDrawBuffers(ARRAY_COUNT(drawBuffersGBuffer), drawBuffersGBuffer);
 
             glViewport(0, 0, app->displaySize.x, app->displaySize.y);
@@ -1476,6 +1476,7 @@ void Render(App* app)
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glEnable(GL_BLEND);
             glBlendFunc(GL_ONE, GL_ONE);
+            glBindFramebuffer(GL_FRAMEBUFFER, app->gBuffer);
             Program& waterEffectProgram = app->programs[app->waterEffectProgramIdx];
             glUseProgram(waterEffectProgram.handle);
             GLenum drawwBuffersGBuffer[] = {GL_COLOR_ATTACHMENT2 };
@@ -1506,7 +1507,7 @@ void Render(App* app)
             glActiveTexture(GL_TEXTURE11);
             glBindTexture(GL_TEXTURE_2D, app->waterDudvMapIdx);
             glUniform1i(app->waterEffectProgram_uDudvMap, 11);
-            /*{
+            {
                 Model& model = app->models[app->planeModelIdx];
                 Mesh& mesh = app->meshes[model.meshIdx];
 
@@ -1518,13 +1519,8 @@ void Render(App* app)
                     Submesh& submesh = mesh.submeshes[i];
                     glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
                 }
-            }*/
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, app->waterReflectionFrameBuffer);
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, app->waterRefractionFrameBuffer);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, app->gBuffer);
-            glBlitFramebuffer(0, 0, app->displaySize.x, app->displaySize.x, 0, 0, app->displaySize.x, app->displaySize.x, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            }
+            //glBlitFramebuffer(0, 0, app->displaySize.x, app->displaySize.x, 0, 0, app->displaySize.x, app->displaySize.x, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             /* Second pass (lighting) */
 
