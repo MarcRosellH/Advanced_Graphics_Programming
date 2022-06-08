@@ -87,6 +87,7 @@ in vec3 vPosition;	// In worldspace
 in vec3 vNormal;	// In worldspace
 in vec3 vViewDir;
 uniform vec3 uColor;
+uniform vec3 cameraPos;
 
 struct Light
 {
@@ -106,6 +107,8 @@ layout(binding = 0, std140) uniform GlobalParams
 };
 
 uniform sampler2D uTexture;
+uniform samplerCube skybox;
+uniform samplerCube irradianceMap;
 
 layout(location = 0) out vec4 oColor;
 
@@ -152,8 +155,18 @@ void main()
 			}
 		}
 	}
+	
+	vec3 I = normalize(vPosition - cameraPos);
+    vec3 R = reflect(I, normalize(vNormal));
+	vec4 ReflectionColor = vec4(texture(skybox, R).rgb, 1.0);
 
-	oColor = vec4(lightFactor, 1.0) * vec4(c, 1.0);
+	vec3 ambient = texture(irradianceMap, vNormal).rgb;
+
+
+    oColor =mix(vec4(lightFactor, 1.0)  * vec4(uColor, 1.0), ReflectionColor, 0.8) * vec4(ambient, 1.0);
+
+
+	//oColor = vec4(lightFactor, 1.0) * vec4(c, 1.0);
 	gl_FragDepth = gl_FragCoord.z - 0.2;
 }
 

@@ -1088,6 +1088,7 @@ void Render(App* app)
 
                 Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
                 glUseProgram(texturedMeshProgram.handle);
+                GLuint cp = glGetUniformLocation(texturedMeshProgram.handle, "cameraPos");
 
                 glBindBufferRange(GL_UNIFORM_BUFFER, BINDING(0), app->uniformBuffer.handle, app->globalParamsOffset, app->globalParamsSize);
 
@@ -1112,11 +1113,46 @@ void Render(App* app)
                         glBindTexture(GL_TEXTURE_2D, app->textures[hasTex ? submeshMaterial.albedoTextureIdx : app->whiteTexIdx].handle);
                         glUniform1i(app->texturedMeshProgram_uTexture, 0);
                         glUniform3f(app->texturedMeshProgram_uColor, (hasTex) ? 1.0F : submeshMaterial.albedo.r, (hasTex) ? 1.0F : submeshMaterial.albedo.g, (hasTex) ? 1.0F : submeshMaterial.albedo.b);
+                        glUniform3f(cp, app->cam.position.x, app->cam.position.y, app->cam.position.z);
+
+                        glActiveTexture(GL_TEXTURE1);
+                        glBindTexture(GL_TEXTURE_CUBE_MAP, app->irradianceMapId);
+                        glUniform1i(app->deferredGeometryProgram_uIrradiance, 1);
+                        glActiveTexture(GL_TEXTURE2);
+                        glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
+                        glUniform1i(app->deferredGeometryProgram_uSkybox, 2);
 
                         Submesh& submesh = mesh.submeshes[i];
                         glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
                     }
                 }
+                 glUseProgram(0);
+
+            glDepthMask(GL_FALSE);
+
+            Program& skyBoxProgram = app->programs[app->skyBox];
+            glUseProgram(skyBoxProgram.handle);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
+            glUniform1i(app->deferredGeometryProgram_uSkybox, 0);
+
+            glDepthFunc(GL_LEQUAL); 
+
+
+            i32 projLoc = glGetUniformLocation(skyBoxProgram.handle, "projection");
+            i32 viewLoc = glGetUniformLocation(skyBoxProgram.handle, "view");
+
+            glUniformMatrix4fv(projLoc, 1, GL_FALSE, &app->projectionMat[0][0]);
+            glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &app->viewMat[0][0]);
+
+          //  glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
+            //    glBindTexture(GL_TEXTURE_CUBE_MAP, app->irradianceMapId);
+            RenderSkybox(app);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+            glUseProgram(0);
+            glDepthMask(GL_TRUE);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
                 RenderQuad(app);
                 glUseProgram(0);
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
