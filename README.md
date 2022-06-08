@@ -19,6 +19,9 @@ The water effect has been implemented using a clipping plane. Some refractions d
 The best way to see how the techniques work, the render method can be changed between forward and deferred. This might show a glance of the difference between applying or not the techniques. (Just a glance, because Environment Mapping has been also implemented in forward rendering).
 
 As well, the user is able to change in scene positions, scales and rotations of entities, as for lights. Also the reflection of entities and other light properties.
+<br>
+![Buttons](https://github.com/MarcRosellH/Advanced_Graphics_Programming/blob/main/screenshots/unknown2.png)
+![Buttons 2](https://github.com/MarcRosellH/Advanced_Graphics_Programming/blob/main/screenshots/unknown.png)
 
 ## Shaders:
 * ConvolutionShader.glsl: Used to convolute the skybox and have a lower quality skybox as an irradiance map.
