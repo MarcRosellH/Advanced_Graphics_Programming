@@ -329,8 +329,8 @@ void Init(App* app)
     app->planeModelIdx = LoadModel(app, "Patrick/plane2.obj");
 
     // Entities initalization
-    //app->entities.push_back(Entity{vec3(0,10,0), vec3(0,0,0), vec3(1,1,1), app->patrickModelIdx});
-    //app->entities.push_back(Entity{ vec3(-6,0,0), vec3(0,0,90), vec3(1,1,1), app->patrickModelIdx });
+    app->entities.push_back(Entity{vec3(12.29F, 11.9F, -24.4F), vec3(0,0,0), vec3(0.2F,0.2F,0.2F), app->patrickModelIdx, 1.0F});
+    app->entities.push_back(Entity{ vec3(2.89F,0.72F,2.37F), vec3(0.0F,90.0F,0.0F), vec3(0.1F,0.1F,0.1F), app->patrickModelIdx, 1.0F });
     //app->entities.push_back(Entity{ vec3(0,0,0), vec3(0,0,0), vec3(1,1,1), app->patrickModelIdx });
     //app->entities.push_back(Entity{ vec3(6,0,-6), vec3(45,0,90), vec3(1,1,1), app->patrickModelIdx });
     //app->entities.push_back(Entity{ vec3(0,0,-6), vec3(0,90,0), vec3(1,1,1), app->patrickModelIdx });
@@ -339,7 +339,7 @@ void Init(App* app)
     app->entities.push_back(Entity{ vec3(-12.270,-3.67,0), vec3(0,0,0), vec3(1,1,1), app->roomModelIdx });
 
     // Lights initialization
-    app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(1,1,1), vec3(0,0,0), vec3(1,-1,1), 100.0F, 1.5F });
+    app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(1,1,1), vec3(0,0,0), vec3(1,-1,1), 100.0F, 2.0F });
     //app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(0,0,1), vec3(0,0,0), vec3(0,0,1), 100.0F, 100.0F });
     //app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,1,1), vec3(0,1,1), vec3(0,0,0), 5.0F, 1.0F });
     //app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,1,0), vec3(6,1,1), vec3(0,0,0), 5.0F, 1.0F });
