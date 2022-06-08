@@ -294,7 +294,7 @@ vec3 DirectionalLight(Light light, vec3 Normal, vec3 Diffuse)
 {
 	float cosAngle = max(dot(Normal, -light.direction), 0.0); 
     vec3 ambient = 0.1 * light.color;
-    vec3 diffuse = 0.9 * light.color * cosAngle;
+    vec3 diffuse = 0.9 * light.color * cosAngle * light.intensity;
 
     return (ambient + diffuse) * Diffuse;
 }
@@ -467,14 +467,13 @@ layout(location=0) out vec4 oColor;
 void main()
 {
 	vec3 c = texture(uTexture, vTexCoord).rgb;
-	/*
+	c *= uColor;
+	
 
-	vec3 I = normalize(vPosition - uCameraPosition);
+	/*vec3 I = normalize(vPosition - uCameraPosition);
 	vec3 R = reflect(I, normalize(vNormal));
-
-	vec4 reflections = vec4(texture(uSkybox, R).rgb, 1.0);
-	oColor = mix(vec4(c.rgb*uColor,1.0), reflections, 0.1);*/
-	oColor = vec4(uColor, 1.0);
+	vec4 reflections = vec4(texture(uSkybox, R).rgb, 1.0);*/
+	oColor = vec4(c, 1.0);
 
 	gl_FragDepth = gl_FragCoord.z - 0.2;
 }
@@ -529,6 +528,8 @@ uniform sampler2D refractionDepth;
 uniform sampler2D normalMap;
 uniform sampler2D dudvMap;
 
+uniform samplerCube skyBox;
+
 in Data
 {
 	vec3 positionViewspace;
@@ -559,6 +560,9 @@ void main()
 	vec3 V = normalize(-FSIn.positionViewspace);
 	vec3 Pw = vec3(viewMatInv * vec4(FSIn.positionViewspace, 1.0));
 	vec2 texCoord = gl_FragCoord.xy / viewportSize;
+	vec3 I = normalize(vec3(texCoord.x, 0.0, texCoord.y) - V);
+	vec3 R = reflect(I, N);
+	vec4 ref = vec4(texture(skyBox, R).rgb, 1.0);
 
 	const vec2 waveLength = vec2(2.0);
 	const vec2 waveStrength = vec2(0.05);
@@ -581,6 +585,7 @@ void main()
 	vec3 F0 = vec3(0.1);
 	vec3 F = fresnelSchlick(max(0.0, dot(V, N)), F0);
 	oColor = vec4(mix(refractionColor, reflectionColor, F), 1.0);
+	oColor = mix(ref, oColor, 0.5);
 	//oColor = vec4(texture(dudvMap, vTexCoord).rgb, 1.0);
 	//oColor = vec4(reflectionColor, 1.0);
 

@@ -303,6 +303,7 @@ struct App
     GLint waterEffectProgram_uRefractionDepth;
     GLint waterEffectProgram_uNormalMap;
     GLint waterEffectProgram_uDudvMap;
+    GLint waterEffectProgram_uSkybox;
 
     // Framebuffers ---------------------
     // Deferred

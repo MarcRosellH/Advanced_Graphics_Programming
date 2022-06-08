@@ -326,7 +326,7 @@ void Init(App* app)
     // Load models
     app->patrickModelIdx = LoadModel(app, "Patrick/Patrick.obj");
     app->roomModelIdx = LoadModel(app, "Lake/Erlaufsee.obj");
-    app->planeModelIdx = LoadModel(app, "Patrick/plane.obj");
+    app->planeModelIdx = LoadModel(app, "Patrick/plane2.obj");
 
     // Entities initalization
     //app->entities.push_back(Entity{vec3(0,10,0), vec3(0,0,0), vec3(1,1,1), app->patrickModelIdx});
@@ -336,10 +336,10 @@ void Init(App* app)
     //app->entities.push_back(Entity{ vec3(0,0,-6), vec3(0,90,0), vec3(1,1,1), app->patrickModelIdx });
     //app->entities.push_back(Entity{ vec3(-6,0,-6), vec3(45,45,45), vec3(1,1,1), app->patrickModelIdx });
     //app->entities.push_back(Entity{ vec3(0,0,-50), vec3(0,0,0), vec3(10,10,10), app->patrickModelIdx });
-    app->entities.push_back(Entity{ vec3(0,-10,0), vec3(0,0,0), vec3(1,1,1), app->roomModelIdx });
+    app->entities.push_back(Entity{ vec3(-12.270,-3.67,0), vec3(0,0,0), vec3(1,1,1), app->roomModelIdx });
 
     // Lights initialization
-    app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(1,1,1), vec3(0,0,0), vec3(1,-1,1), 100.0F, 10.0F });
+    app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(1,1,1), vec3(0,0,0), vec3(1,-1,1), 100.0F, 1.5F });
     //app->lights.push_back(Light{ LIGHTTYPE_DIRECTIONAL, vec3(0,0,1), vec3(0,0,0), vec3(0,0,1), 100.0F, 100.0F });
     //app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,1,1), vec3(0,1,1), vec3(0,0,0), 5.0F, 1.0F });
     //app->lights.push_back(Light{ LIGHTTYPE_POINT, vec3(1,1,0), vec3(6,1,1), vec3(0,0,0), 5.0F, 1.0F });
@@ -451,6 +451,7 @@ void Init(App* app)
     app->waterEffectProgram_uRefractionDepth = glGetUniformLocation(waterEffectProgram.handle, "refractionDepth");
     app->waterEffectProgram_uNormalMap = glGetUniformLocation(waterEffectProgram.handle, "normalMap");
     app->waterEffectProgram_uDudvMap = glGetUniformLocation(waterEffectProgram.handle, "dudvMap");
+    app->waterEffectProgram_uSkybox = glGetUniformLocation(waterEffectProgram.handle, "skyBox");
 
     // [Deferred Render] Geometry Pass Program
     app->deferredGeometryPassProgramIdx = LoadProgram(app, "shaders.glsl", "DEFERRED_GEOMETRY_PASS");
@@ -1510,6 +1511,9 @@ void Render(App* app)
             glActiveTexture(GL_TEXTURE11);
             glBindTexture(GL_TEXTURE_2D, app->waterDudvMapIdx);
             glUniform1i(app->waterEffectProgram_uDudvMap, 11);
+            glActiveTexture(GL_TEXTURE12);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, app->cubeMapId);
+            glUniform1i(app->waterEffectProgram_uSkybox, 12);
             {
                 Model& model = app->models[app->planeModelIdx];
                 Mesh& mesh = app->meshes[model.meshIdx];
