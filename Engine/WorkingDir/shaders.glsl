@@ -466,14 +466,15 @@ layout(location=0) out vec4 oColor;
 
 void main()
 {
-	vec4 c = vec4(texture(uTexture, vTexCoord).rgb * uColor, 1.0);
-
+	vec3 c = texture(uTexture, vTexCoord).rgb;
+	/*
 
 	vec3 I = normalize(vPosition - uCameraPosition);
 	vec3 R = reflect(I, normalize(vNormal));
 
 	vec4 reflections = vec4(texture(uSkybox, R).rgb, 1.0);
-	oColor = mix(c, reflections, 0.5);
+	oColor = mix(vec4(c.rgb*uColor,1.0), reflections, 0.1);*/
+	oColor = vec4(uColor, 1.0);
 
 	gl_FragDepth = gl_FragCoord.z - 0.2;
 }

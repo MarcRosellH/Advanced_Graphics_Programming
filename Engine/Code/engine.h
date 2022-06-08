@@ -224,6 +224,7 @@ struct App
     // Model indices
     u32 patrickModelIdx;
     u32 roomModelIdx;
+    u32 planeModelIdx;
 
     // Program indices
     u32 texturedGeometryProgramIdx;
