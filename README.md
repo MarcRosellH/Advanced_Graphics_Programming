@@ -7,7 +7,7 @@ Marc Rosell Hernandez
 ## Techniques implemented:
 * Environment mapping (skybox, fake reflections, and diffuse IBL)
 ![Environment mapping](https://github.com/MarcRosellH/Advanced_Graphics_Programming/blob/main/screenshots/Advanced_Graphics_Programming_08_06_2022_21_51_04.png)
-Buit in skybox, which uses cubic projection.
+Bulit in skybox, which uses cubic projection.
 The objects use fake reflections to reflect the skybox and diffuse reflection to 
 simulate environment lightning via image based lightning.
 
