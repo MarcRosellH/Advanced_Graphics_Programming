@@ -235,6 +235,9 @@ struct App
     //skybox program
     u32 skyBox;
     u32 ConvolutionShader;
+    // Water program indices
+    u32 clippedMeshIdx;
+    u32 waterEffectProgramIdx;
 
     // Texture indices
     u32 diceTexIdx;
@@ -243,6 +246,8 @@ struct App
     u32 normalTexIdx;
     u32 magentaTexIdx;
     u32 skyBoxtext[6];
+    u32 waterNormalMapIdx;
+    u32 waterDudvMapIdx;
 
     // Entities
     std::vector<Entity>     entities;
@@ -277,6 +282,26 @@ struct App
     GLint deferredLightingProgram_uGPosition;
     GLint deferredLightingProgram_uGNormals;
     GLint deferredLightingProgram_uGDiffuse;
+
+    GLint clippedProgram_uProj;
+    GLint clippedProgram_uView;
+    GLint clippedProgram_uModel;
+    GLint clippedProgram_uClippingPlane;
+    GLint clipperProgram_uTexture;
+    GLint clipperProgram_uSkybox;
+    GLint clipperProgram_uColor;
+
+    GLint waterEffectProgram_uProj;
+    GLint waterEffectProgram_uView;
+    GLint waterEffectProgram_uViewportSize;
+    GLint waterEffectProgram_uViewMatInv;
+    GLint waterEffectProgram_uProjMatInv;
+    GLint waterEffectProgram_uReflectionMap;
+    GLint waterEffectProgram_uReflectionDepth;
+    GLint waterEffectProgram_uRefractionMap;
+    GLint waterEffectProgram_uRefractionDepth;
+    GLint waterEffectProgram_uNormalMap;
+    GLint waterEffectProgram_uDudvMap;
 
     // Framebuffers ---------------------
     // Deferred
