@@ -447,7 +447,7 @@ layout(binding = 0, std140) uniform GlobalParams
 {
 	vec3 uCameraPosition;
 	unsigned int uLightCount;
-	Light uLight[16];
+	Light uLight[50];
 };
 
 layout(binding = 1, std140) uniform LocalParams
@@ -474,7 +474,7 @@ void main()
 
 	vec4 reflections = vec4(texture(uSkybox, R).rgb, 1.0);
 	oColor = mix(vec4(c.rgb*uColor,1.0), reflections, 0.1);*/
-	oColor = vec4(c*uColor, 1.0);
+	oColor = vec4(uColor, 1.0);
 
 	gl_FragDepth = gl_FragCoord.z - 0.2;
 }
@@ -489,6 +489,7 @@ void main()
 
 layout (location = 0) in vec3 aPosition;
 layout (location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aTexCoord;
 
 uniform mat4 uProj;
 uniform mat4 uView;
@@ -498,12 +499,16 @@ out Data
 	vec3 positionViewspace;
 	vec3 normalViewspace;
 }VSOut;
+out vec2 vTexCoord;
 
 void main()
 {
+	vTexCoord = aTexCoord;
+
 	VSOut.positionViewspace = vec3(uView * vec4(aPosition, 1.0));
 	VSOut.normalViewspace = vec3(uView * vec4(aNormal, 0.0));
 	gl_Position = uProj * vec4(VSOut.positionViewspace, 1.0);
+
 }
 
 #elif defined(FRAGMENT) ///////////////////////////////////////////////
@@ -530,6 +535,8 @@ in Data
 	vec3 normalViewspace;
 } FSIn;
 
+in vec2 vTexCoord;
+
 vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
 	return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
@@ -543,6 +550,8 @@ vec3 reconstructPixelPosition(float depth)
 	positionEyespace.xyz /= positionEyespace.w;
 	return positionEyespace.xyz;
 }
+
+out float gl_FragDepth;
 
 void main()
 {
@@ -567,13 +576,16 @@ void main()
 	float distortedWaterDepth = FSIn.positionViewspace.z - distortedGroundPosViewspace.z;
 	float tintFactor = clamp(distortedWaterDepth / turbidityDistance, 0.0, 1.0);
 	vec3 waterColor = vec3(0.25, 0.4, 0.6);
-	refractionColor = mix(refractionColor, waterColor, tintFactor);
+	refractionColor = mix(refractionColor, waterColor, tintFactor*2);
 
 	vec3 F0 = vec3(0.1);
 	vec3 F = fresnelSchlick(max(0.0, dot(V, N)), F0);
 	oColor = vec4(mix(refractionColor, reflectionColor, F), 1.0);
-	
+	//oColor = vec4(texture(dudvMap, vTexCoord).rgb, 1.0);
+	//oColor = vec4(reflectionColor, 1.0);
+
 	gl_FragDepth = gl_FragCoord.z - 0.2;
+
 }
 
 #endif

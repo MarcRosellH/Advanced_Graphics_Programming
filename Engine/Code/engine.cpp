@@ -442,7 +442,7 @@ void Init(App* app)
 
     app->waterEffectProgram_uProj = glGetUniformLocation(waterEffectProgram.handle, "uProj");
     app->waterEffectProgram_uView = glGetUniformLocation(waterEffectProgram.handle, "uView");
-    app->waterEffectProgram_uViewportSize = glGetUniformLocation(waterEffectProgram.handle, "ViewportSize");
+    app->waterEffectProgram_uViewportSize = glGetUniformLocation(waterEffectProgram.handle, "viewportSize");
     app->waterEffectProgram_uViewMatInv = glGetUniformLocation(waterEffectProgram.handle, "viewMatInv");
     app->waterEffectProgram_uProjMatInv = glGetUniformLocation(waterEffectProgram.handle, "projectionMatInv");
     app->waterEffectProgram_uReflectionMap = glGetUniformLocation(waterEffectProgram.handle, "reflectionMap");
@@ -1272,15 +1272,17 @@ void Render(App* app)
             GLenum buffers[] = { GL_COLOR_ATTACHMENT4 };
             glDrawBuffers(ARRAY_COUNT(buffers), buffers);
 
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
             glEnable(GL_DEPTH_TEST);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+           // glEnable(GL_BLEND);
+            //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             glEnable(GL_CLIP_DISTANCE0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
             Program& clippedMeshProgram = app->programs[app->clippedMeshIdx];
             glUseProgram(clippedMeshProgram.handle);
@@ -1288,6 +1290,7 @@ void Render(App* app)
             Camera reflectCamera = app->cam;
             reflectCamera.position.y = -reflectCamera.position.y;
             reflectCamera.pitch = -reflectCamera.pitch;
+            reflectCamera.aspectRatio = app->displaySize.x / app->displaySize.y;
 
             glBindBufferRange(GL_UNIFORM_BUFFER, BINDING(0), app->uniformBuffer.handle, app->globalParamsOffset, app->globalParamsSize);
             glUniform4i(app->clippedProgram_uClippingPlane, 0, 1, 0, 0);
