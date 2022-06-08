@@ -27,3 +27,6 @@ As well, the user is able to change in scene positions, scales and rotations of 
 * ConvolutionShader.glsl: Used to convolute the skybox and have a lower quality skybox as an irradiance map.
 * Skybox.glsl: Used to render the skybox on screen
 * shaders.glsl: Has every other shader, seperated using shader names, so it contains the basic forward and deferred rendering shaders, as well as the clipping plane shader and the water effect shader
+
+
+[Presentation Link](https://docs.google.com/presentation/d/1o06jpdYUI6HVedFqyzqb0EbrdpFqXT-Ttzwwgacdbjw/edit#slide=id.ge49cd861c2_0_11)
