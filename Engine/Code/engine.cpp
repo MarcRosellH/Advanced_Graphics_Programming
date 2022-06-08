@@ -1474,8 +1474,8 @@ void Render(App* app)
             glDepthMask(GL_TRUE);
             glEnable(GL_DEPTH_TEST);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_ONE, GL_ONE);
+            //glEnable(GL_BLEND);
+            //glBlendFunc(GL_ONE, GL_ONE);
             glBindFramebuffer(GL_FRAMEBUFFER, app->gBuffer);
             Program& waterEffectProgram = app->programs[app->waterEffectProgramIdx];
             glUseProgram(waterEffectProgram.handle);
@@ -1531,7 +1531,6 @@ void Render(App* app)
 
             glEnable(GL_BLEND);
             glBlendFunc(GL_ONE, GL_ONE);
-
             //glDepthMask(GL_FALSE);
 
             Program& deferredLightingPassProgram = app->programs[app->deferredLightingPassProgramIdx];

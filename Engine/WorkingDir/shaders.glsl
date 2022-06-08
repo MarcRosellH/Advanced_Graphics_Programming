@@ -447,7 +447,7 @@ layout(binding = 0, std140) uniform GlobalParams
 {
 	vec3 uCameraPosition;
 	unsigned int uLightCount;
-	Light uLight[50];
+	Light uLight[16];
 };
 
 layout(binding = 1, std140) uniform LocalParams
@@ -474,7 +474,7 @@ void main()
 
 	vec4 reflections = vec4(texture(uSkybox, R).rgb, 1.0);
 	oColor = mix(vec4(c.rgb*uColor,1.0), reflections, 0.1);*/
-	oColor = vec4(uColor, 1.0);
+	oColor = vec4(c*uColor, 1.0);
 
 	gl_FragDepth = gl_FragCoord.z - 0.2;
 }
@@ -572,6 +572,8 @@ void main()
 	vec3 F0 = vec3(0.1);
 	vec3 F = fresnelSchlick(max(0.0, dot(V, N)), F0);
 	oColor = vec4(mix(refractionColor, reflectionColor, F), 1.0);
+	
+	gl_FragDepth = gl_FragCoord.z - 0.2;
 }
 
 #endif
