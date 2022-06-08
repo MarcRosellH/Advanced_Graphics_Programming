@@ -1520,9 +1520,11 @@ void Render(App* app)
                 }
             }*/
             glBindFramebuffer(GL_READ_FRAMEBUFFER, app->waterReflectionFrameBuffer);
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, app->waterRefractionAttachmentHandle);
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, app->waterRefractionFrameBuffer);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, app->gBuffer);
             glBlitFramebuffer(0, 0, app->displaySize.x, app->displaySize.x, 0, 0, app->displaySize.x, app->displaySize.x, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             /* Second pass (lighting) */
 
@@ -1563,6 +1565,7 @@ void Render(App* app)
 
             glUseProgram(0);
 
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             }
             break;
